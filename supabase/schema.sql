@@ -693,37 +693,37 @@ begin
     where schemaname = 'public' and tablename not in ('empresas', 'perfiles', 'usuarios')
   loop
     execute format('alter table public.%I enable row level security', t);
-    execute format('create policy %I on public.%I for select to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_select', t);
-    execute format('create policy %I on public.%I for insert to authenticated with check (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_insert', t);
-    execute format('create policy %I on public.%I for update to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin()) with check (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_update', t);
-    execute format('create policy %I on public.%I for delete to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_delete', t);
+    execute format('create policy if not exists %I on public.%I for select to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_select_' || t, t);
+    execute format('create policy if not exists %I on public.%I for insert to authenticated with check (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_insert_' || t, t);
+    execute format('create policy if not exists %I on public.%I for update to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin()) with check (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_update_' || t, t);
+    execute format('create policy if not exists %I on public.%I for delete to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_delete_' || t, t);
   end loop;
 end $$;
 
 -- usuarios: cada uno lee su fila y las de su empresa; solo superadmin escribe ajenos.
 alter table public.usuarios enable row level security;
-create policy "usuarios_select" on public.usuarios
+create policy if not exists "usuarios_select" on public.usuarios
   for select to authenticated using (id = auth.uid() or empresa_id = public.auth_empresa_id() or public.is_superadmin());
-create policy "usuarios_insert" on public.usuarios
+create policy if not exists "usuarios_insert" on public.usuarios
   for insert to authenticated with check (public.is_superadmin());
-create policy "usuarios_update" on public.usuarios
+create policy if not exists "usuarios_update" on public.usuarios
   for update to authenticated using (id = auth.uid() or public.is_superadmin()) with check (public.is_superadmin());
-create policy "usuarios_delete" on public.usuarios
+create policy if not exists "usuarios_delete" on public.usuarios
   for delete to authenticated using (public.is_superadmin());
 
 -- perfiles: catálogo global, lectura para todos los autenticados.
 alter table public.perfiles enable row level security;
-create policy "perfiles_select" on public.perfiles for select to authenticated using (true);
+create policy if not exists "perfiles_select" on public.perfiles for select to authenticated using (true);
 
 -- empresas: superadmin gestiona; los demás leen solo su propia empresa.
 alter table public.empresas enable row level security;
-create policy "empresas_select" on public.empresas
+create policy if not exists "empresas_select" on public.empresas
   for select to authenticated using (id = public.auth_empresa_id() or public.is_superadmin());
-create policy "empresas_insert" on public.empresas
+create policy if not exists "empresas_insert" on public.empresas
   for insert to authenticated with check (public.is_superadmin());
-create policy "empresas_update" on public.empresas
+create policy if not exists "empresas_update" on public.empresas
   for update to authenticated using (public.is_superadmin()) with check (public.is_superadmin());
-create policy "empresas_delete" on public.empresas
+create policy if not exists "empresas_delete" on public.empresas
   for delete to authenticated using (public.is_superadmin());
 
 -- Candidatos: inserción anónima (formulario público postularme, sin empresa).
