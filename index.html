@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema RRHH</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231a4d8f'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='Arial'>R</text></svg>" />
+  <link rel="stylesheet" href="/src/styles/main.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="screen-login"></div>
+    <div id="screen-config" class="hidden"></div>
+    <div id="layout" class="hidden">
+      <aside id="sidebar"></aside>
+      <main id="main">
+        <header id="topbar">
+          <h1 id="topbar-title"></h1>
+          <div class="topbar-right">
+            <span class="badge-rol" id="topbar-rol"></span>
+            <span id="topbar-btn"></span>
+          </div>
+        </header>
+        <div id="screens"></div>
+      </main>
+    </div>
+    <div id="modal-root"></div>
+    <div id="toast-root"></div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
