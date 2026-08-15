@@ -10,20 +10,6 @@
 create extension if not exists pgcrypto;
 
 -- ============================================================================
--- 0) HELPERS DE TENANT (RLS)
--- ============================================================================
-
-create or replace function public.auth_empresa_id() returns text
-language sql stable security definer set search_path = public as $$
-  select u.empresa_id from public.usuarios u where u.id = auth.uid();
-$$;
-
-create or replace function public.is_superadmin() returns boolean
-language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.usuarios u where u.id = auth.uid() and u.es_superadmin);
-$$;
-
--- ============================================================================
 -- 1) TABLAS
 -- ============================================================================
 
@@ -37,7 +23,7 @@ create table if not exists public.empresas (
 );
 
 create table if not exists public.perfiles (
-  id_local text primary key, nombre text, desc text,
+  id_local text primary key, nombre text, "desc" text,
   created_at timestamptz default now(), updated_at timestamptz default now()
 );
 
@@ -47,6 +33,20 @@ create table if not exists public.usuarios (
   es_superadmin boolean default false,
   created_at timestamptz default now(), updated_at timestamptz default now()
 );
+
+-- ============================================================================
+-- 2) HELPERS DE TENANT (RLS) — después de public.usuarios
+-- ============================================================================
+
+create or replace function public.auth_empresa_id() returns text
+language sql stable security definer set search_path = public as $$
+  select u.empresa_id from public.usuarios u where u.id = auth.uid();
+$$;
+
+create or replace function public.is_superadmin() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from public.usuarios u where u.id = auth.uid() and u.es_superadmin);
+$$;
 
 -- ---- Ingreso / selección ----------------------------------------------------
 create table if not exists public.candidatos (
@@ -693,43 +693,58 @@ begin
     where schemaname = 'public' and tablename not in ('empresas', 'perfiles', 'usuarios')
   loop
     execute format('alter table public.%I enable row level security', t);
-    execute format('create policy if not exists %I on public.%I for select to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_select_' || t, t);
-    execute format('create policy if not exists %I on public.%I for insert to authenticated with check (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_insert_' || t, t);
-    execute format('create policy if not exists %I on public.%I for update to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin()) with check (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_update_' || t, t);
-    execute format('create policy if not exists %I on public.%I for delete to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_delete_' || t, t);
+    execute format('drop policy if exists %I on public.%I', 'tenant_select_' || t, t);
+    execute format('create policy %I on public.%I for select to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_select_' || t, t);
+    execute format('drop policy if exists %I on public.%I', 'tenant_insert_' || t, t);
+    execute format('create policy %I on public.%I for insert to authenticated with check (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_insert_' || t, t);
+    execute format('drop policy if exists %I on public.%I', 'tenant_update_' || t, t);
+    execute format('create policy %I on public.%I for update to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin()) with check (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_update_' || t, t);
+    execute format('drop policy if exists %I on public.%I', 'tenant_delete_' || t, t);
+    execute format('create policy %I on public.%I for delete to authenticated using (empresa_id = public.auth_empresa_id() or public.is_superadmin())', 'tenant_delete_' || t, t);
   end loop;
 end $$;
 
 -- usuarios: cada uno lee su fila y las de su empresa; solo superadmin escribe ajenos.
 alter table public.usuarios enable row level security;
-create policy if not exists "usuarios_select" on public.usuarios
+drop policy if exists "usuarios_select" on public.usuarios;
+create policy "usuarios_select" on public.usuarios
   for select to authenticated using (id = auth.uid() or empresa_id = public.auth_empresa_id() or public.is_superadmin());
-create policy if not exists "usuarios_insert" on public.usuarios
+drop policy if exists "usuarios_insert" on public.usuarios;
+create policy "usuarios_insert" on public.usuarios
   for insert to authenticated with check (public.is_superadmin());
-create policy if not exists "usuarios_update" on public.usuarios
+drop policy if exists "usuarios_update" on public.usuarios;
+create policy "usuarios_update" on public.usuarios
   for update to authenticated using (id = auth.uid() or public.is_superadmin()) with check (public.is_superadmin());
-create policy if not exists "usuarios_delete" on public.usuarios
+drop policy if exists "usuarios_delete" on public.usuarios;
+create policy "usuarios_delete" on public.usuarios
   for delete to authenticated using (public.is_superadmin());
 
 -- perfiles: catálogo global, lectura para todos los autenticados.
 alter table public.perfiles enable row level security;
-create policy if not exists "perfiles_select" on public.perfiles for select to authenticated using (true);
+drop policy if exists "perfiles_select" on public.perfiles;
+create policy "perfiles_select" on public.perfiles for select to authenticated using (true);
 
 -- empresas: superadmin gestiona; los demás leen solo su propia empresa.
 alter table public.empresas enable row level security;
-create policy if not exists "empresas_select" on public.empresas
+drop policy if exists "empresas_select" on public.empresas;
+create policy "empresas_select" on public.empresas
   for select to authenticated using (id = public.auth_empresa_id() or public.is_superadmin());
-create policy if not exists "empresas_insert" on public.empresas
+drop policy if exists "empresas_insert" on public.empresas;
+create policy "empresas_insert" on public.empresas
   for insert to authenticated with check (public.is_superadmin());
-create policy if not exists "empresas_update" on public.empresas
+drop policy if exists "empresas_update" on public.empresas;
+create policy "empresas_update" on public.empresas
   for update to authenticated using (public.is_superadmin()) with check (public.is_superadmin());
-create policy if not exists "empresas_delete" on public.empresas
+drop policy if exists "empresas_delete" on public.empresas;
+create policy "empresas_delete" on public.empresas
   for delete to authenticated using (public.is_superadmin());
 
 -- Candidatos: inserción anónima (formulario público postularme, sin empresa).
-create policy if not exists "anon_insert_candidatos" on public.candidatos
+drop policy if exists "anon_insert_candidatos" on public.candidatos;
+create policy "anon_insert_candidatos" on public.candidatos
   for insert to anon with check (true);
-create policy if not exists "anon_select_candidatos" on public.candidatos
+drop policy if exists "anon_select_candidatos" on public.candidatos;
+create policy "anon_select_candidatos" on public.candidatos
   for select to anon using (false);
 
 -- ============================================================================
@@ -740,13 +755,17 @@ insert into storage.buckets (id, name, public)
 values ('adjuntos', 'adjuntos', false)
 on conflict (id) do nothing;
 
-create policy if not exists "adjuntos_auth_read" on storage.objects
+drop policy if exists "adjuntos_auth_read" on storage.objects;
+create policy "adjuntos_auth_read" on storage.objects
   for select to authenticated using (bucket_id = 'adjuntos');
-create policy if not exists "adjuntos_auth_write" on storage.objects
+drop policy if exists "adjuntos_auth_write" on storage.objects;
+create policy "adjuntos_auth_write" on storage.objects
   for insert to authenticated with check (bucket_id = 'adjuntos');
-create policy if not exists "adjuntos_auth_update" on storage.objects
+drop policy if exists "adjuntos_auth_update" on storage.objects;
+create policy "adjuntos_auth_update" on storage.objects
   for update to authenticated using (bucket_id = 'adjuntos');
-create policy if not exists "adjuntos_auth_delete" on storage.objects
+drop policy if exists "adjuntos_auth_delete" on storage.objects;
+create policy "adjuntos_auth_delete" on storage.objects
   for delete to authenticated using (bucket_id = 'adjuntos');
 
 -- ============================================================================
@@ -759,7 +778,7 @@ insert into public.empresas (id, nombre, fecha_alta, activa) values
 on conflict (id) do nothing;
 
 -- ---- Perfiles ---------------------------------------------------------------
-insert into public.perfiles (id_local, nombre, desc) values
+insert into public.perfiles (id_local, nombre, "desc") values
   ('admin', 'Administrador total', 'Superusuario de la empresa: acceso completo a los módulos de su tenant.'),
   ('rrhh', 'RRHH', 'Todo el sector RRHH: selección, ingreso, personal, liquidación.'),
   ('ops', 'Operaciones', 'Servicios, reasignaciones, sanciones y novedades de personal.'),
@@ -854,7 +873,7 @@ insert into public.instructores (id_local, nombre, empresa_id) values
   ('in-01', 'Instructor interno', 'emp-1'), ('in-02', 'Instructor externo', 'emp-1')
 on conflict (id_local) do nothing;
 
-insert into public.metodos_eval (id_local, nombre, empresa_id) values
+insert into public.metodos_evaluacion (id_local, nombre, empresa_id) values
   ('me-01', 'Evaluación escrita', 'emp-1'), ('me-02', 'Evaluación práctica', 'emp-1'), ('me-03', 'Observación en servicio', 'emp-1')
 on conflict (id_local) do nothing;
 

@@ -49,7 +49,7 @@ async function seedEmpresa(supabase, empresaId) {
     ]],
     ['tipos_capacitacion', ['Curso', 'Taller', 'Charla', 'Formación en servicio'].map((nombre, i) => ({ id: `tc-${i}-${empresaId}`, nombre }))],
     ['instructores', ['Instructor interno', 'Instructor externo'].map((nombre, i) => ({ id: `in-${i}-${empresaId}`, nombre }))],
-    ['metodos_eval', ['Evaluación escrita', 'Evaluación práctica', 'Observación en servicio'].map((nombre, i) => ({ id: `me-${i}-${empresaId}`, nombre }))],
+    ['metodos_evaluacion', ['Evaluación escrita', 'Evaluación práctica', 'Observación en servicio'].map((nombre, i) => ({ id: `me-${i}-${empresaId}`, nombre }))],
     ['motivos_vacaciones', [{ id: `mv-1-${empresaId}`, nombre: 'Vacaciones anuales', anulado: false }, { id: `mv-2-${empresaId}`, nombre: 'Vacaciones fraccionadas', anulado: false }]],
     ['motivos_descanso', [{ id: `md-1-${empresaId}`, nombre: 'Descanso semanal', anulado: false }, { id: `md-2-${empresaId}`, nombre: 'Descanso mensual', anulado: false }]],
     ['tipos_situaciones_legales', ['Embargo', 'Inhibición', 'Quiebra', 'Concursado', 'Decreto de embargo', 'Otro'].map((nombre, i) => ({ id: `tl-${i}-${empresaId}`, nombre, anulado: false }))],
