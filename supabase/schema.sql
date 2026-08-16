@@ -787,38 +787,15 @@ insert into public.perfiles (id_local, nombre, "desc") values
   ('asoc', 'Asociado', 'Autoconsulta y trámites personales (adelantos, vacaciones).')
 on conflict (id_local) do nothing;
 
--- ---- Usuarios demo (Auth) — todos de emp-1; admin es superadmin multitenant --
-insert into auth.users (id, instance_id, aud, role, email, encrypted_password,
-                        email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-values
-  ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-   'admin@rrhh.cliente.com', crypt('Admin123!', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{}', now(), now()),
-  ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-   'rrhh@rrhh.cliente.com', crypt('Rrhh123!', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{}', now(), now()),
-  ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-   'operaciones@rrhh.cliente.com', crypt('Oper123!', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{}', now(), now()),
-  ('00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-   'finanzas@rrhh.cliente.com', crypt('Fin123!', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{}', now(), now()),
-  ('00000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-   'supervisor@rrhh.cliente.com', crypt('Sup123!', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{}', now(), now()),
-  ('00000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-   'asociado@rrhh.cliente.com', crypt('Asoc123!', gen_salt('bf')), now(),
-   '{"provider":"email","providers":["email"]}', '{}', now(), now())
-on conflict (id) do nothing;
-
-insert into public.usuarios (id, email, nombre, perfil, nro_socio, empresa_id, es_superadmin) values
-  ('00000000-0000-0000-0000-000000000001', 'admin@rrhh.cliente.com', 'Administrador del sistema', 'Administrador total', null, 'emp-1', true),
-  ('00000000-0000-0000-0000-000000000002', 'rrhh@rrhh.cliente.com', 'Área de RRHH', 'RRHH', null, 'emp-1', false),
-  ('00000000-0000-0000-0000-000000000003', 'operaciones@rrhh.cliente.com', 'Gerente de Operaciones', 'Operaciones', null, 'emp-1', false),
-  ('00000000-0000-0000-0000-000000000004', 'finanzas@rrhh.cliente.com', 'Finanzas', 'Finanzas', null, 'emp-1', false),
-  ('00000000-0000-0000-0000-000000000005', 'supervisor@rrhh.cliente.com', 'Supervisor', 'Supervisor', '100', 'emp-1', false),
-  ('00000000-0000-0000-0000-000000000006', 'asociado@rrhh.cliente.com', 'Asociado de prueba', 'Asociado', '101', 'emp-1', false)
-on conflict (id) do nothing;
+-- ---- Usuarios demo ---------------------------------------------------------
+-- IMPORTANTE: los usuarios de auth NO se insertan por SQL (GoTrue rechaza filas
+-- con columnas NULL). Crear los usuarios con la Admin API (service_role) y luego
+-- insertar sus filas en public.usuarios con el id devuelto por la API.
+-- Script de referencia: scripts/seed-demo-users.mjs
+-- Credenciales demo: admin@rrhh.cliente.com / Admin123!  (admin superadmin)
+--   rrhh@rrhh.cliente.com / Rrhh123! | operaciones@rrhh.cliente.com / Oper123!
+--   finanzas@rrhh.cliente.com / Fin123! | supervisor@rrhh.cliente.com / Sup123!
+--   asociado@rrhh.cliente.com / Asoc123!
 
 -- ---- Servicios --------------------------------------------------------------
 insert into public.parametros_servicio (id_local, servicio, dias_vacaciones, dias_descanso, horas_servicio, empresa_id) values
