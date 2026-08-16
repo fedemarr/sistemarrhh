@@ -2,6 +2,8 @@
 
 export * from './descansos.js';
 
+import { renderDescansosInicial, abrirNuevoDescanso, editarDescansoPorId, marcarDescansoTomado, anularDescansoPorId, autocompletarDesc, abrirModalConfigDescanso, editarConfigDescanso, anularConfigDescanso, emitirReposoMensual, confirmarEmitirReposo } from './descansos.js';
+
 export const descansosScreenConfig = {
   descansos: {
     title: 'Descansos',

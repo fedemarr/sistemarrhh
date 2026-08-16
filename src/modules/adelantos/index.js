@@ -5,6 +5,10 @@ export * from './pedidos_adelantos.js';
 export * from './gestion_adelantos.js';
 export * from './mis_adelantos.js';
 
+import { renderPedidosAdelantos, filtrarPedidosAdelantos, verPedidoAdelanto, abrirNuevoPedidoAdelanto, autocompletarPedidoAdelanto, previewCuota, guardarAdelantoBorrador, enviarPedidoAdelanto, cancelarPedidoAdelanto } from './pedidos_adelantos.js';
+import { renderGestionAdelantos, verGestionAdelanto, aprobarAdelantoSup, rechazarAdelantoSup, aprobarAdelantoFin, rechazarAdelantoFin, entregarAdelanto } from './gestion_adelantos.js';
+import { renderMisAdelantos, verMisAdelanto, abrirModalMisAdelanto, previewMisCuota } from './mis_adelantos.js';
+
 export const adelantosScreenConfig = {
   pedidos_adelantos: {
     title: 'Pedidos de adelanto',

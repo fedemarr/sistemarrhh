@@ -4,6 +4,10 @@ export * from './legajos.js';
 export * from './importador.js';
 export * from './importarCbu.js';
 
+import { renderLegajos, filtrarLegajos, verLegajo, tabLeg, editarLegajo, editarLegajoActual, eliminarLegajo, eliminarLegajoActual, imprimirLegajo, toggleAltaObraSocial, toggleSeccionVacacionesLegajo, toggleTodosLegajos, calcularPrueba, barraPrueba } from './legajos.js';
+import { abrirImportadorLegajos, descargarPlantillaLegajos, confirmarImportacionLegajos } from './importador.js';
+import { abrirImportarCbu, confirmarImportarCbu } from './importarCbu.js';
+
 export const legajosScreenConfig = {
   legajos: {
     title: 'Legajos',

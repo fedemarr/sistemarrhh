@@ -2,6 +2,8 @@
 
 export * from './capacitaciones.js';
 
+import { renderCapacitaciones, filtrarCapacitaciones, autocompletarCap, abrirNuevaCapacitacion, abrirEditarCapacitacionPorId, cancelarCap, anularCapacitacionPorId, abrirDictarCapacitacionPorId, guardarDictadoCap, analizarCapacitacionesIA } from './capacitaciones.js';
+
 export const capacitacionesScreenConfig = {
   capacitaciones: {
     title: 'Capacitaciones',

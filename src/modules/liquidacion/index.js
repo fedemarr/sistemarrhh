@@ -14,6 +14,19 @@ export * from './feriados.js';
 export * from './liquidaciones.js';
 export * from './mantenimiento.js';
 
+import { renderCategorias, agregarCategoria, editarCategoria, anularCategoria, guardarCategoria, vistaPreviaCategorias, verParametrosValoresYObservaciones } from './categorias.js';
+import { renderSmvm, agregarValorParametro, editarValorParametro, anularValorParametro, guardarValorParametro, verParametrosVerHistorial } from './smvm.js';
+import { renderLiquidacionHorasInicial, filtrarLiquidacionesHoras, verLiquidacionHoras, abrirNuevaLiquidacionHoras, abrirEditarLiquidacionHorasPorId, autocompletarLiquidacion, pintarValorHora, liquidarHorasPorId, anularLiquidacionHorasPorId } from './liquidacion_horas.js';
+import { renderLiqAdminInicial, filtrarLiqAdmin, verLiqAdmin, abrirNuevaLiqAdmin, autocompletarLiqAdmin, liquidarAdminPorId, anularLiqAdminPorId } from './liq_admin.js';
+import { renderMantenimiento, renderMantenimientoTab, exportarBackupJSON, limpiarRegistrosAnulados, verLogs } from './mantenimiento.js';
+import { renderRetenes, agregarReten, editarReten, anularReten, guardarReten } from './retenes.js';
+import { renderLiquidaciones, abrirNuevoRecibo, verRecibo, imprimirRecibo, emitirRecibo, anularRecibo } from './liquidaciones.js';
+import { renderMonotributos, abrirNuevaRetMonotributo, autocompletarMono, guardarRetMonotributo, anularMono } from './monotributos.js';
+import { renderRetenciones, filtrarRetenciones, abrirNuevaRetencion, editarRetencion, anularRetencion, guardarRetencion, autocompletarRetencion } from './retenciones.js';
+import { renderDescuentos, filtrarDescuentos, verDescuento, abrirNuevoDescuento, abrirEditarDescuento, autocompletarDescuento, guardarDescuento, anularDescuento } from './descuentos.js';
+import { renderParitarias, abrirModalParitaria, editarParitaria, guardarParitaria, anularParitaria, verActasParitarias } from './paritarias.js';
+import { renderFeriados, abrirNuevoFeriado, guardarFeriado, anularFeriado } from './feriados.js';
+
 export const liquidacionScreenConfig = {
   categorias: {
     title: 'Categorías salariales',

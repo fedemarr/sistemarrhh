@@ -2,6 +2,8 @@
 
 export * from './pedidos.js';
 
+import { abrirNuevoPedido, renderPedidos, filtrarPedidos, renderPerfilInputs, verDetallePedido, editarPedido, cerrarPedido } from './pedidos.js';
+
 export const pedidosScreenConfig = {
   pedidos: {
     title: 'Pedidos de personal',

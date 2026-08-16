@@ -2,6 +2,8 @@
 
 export * from './vacaciones.js';
 
+import { renderVacacionesInicial, renderVacacionesInterno, tabVacaciones, filtrarVacaciones, verDetalleVacacion, autocompletarVac, abrirNuevaSolicitudVacaciones, abrirBorradorSolicitudVacacionesPorId, abrirEditarSolicitudVacacionesPorId, comenzarVacacionesPorId, abrirComienzoVacacionesPorId, abrirCierreVacacionesPorId, cerrarVacacionesPorId, cancelarVacacionesPorId, renderVacacionesCanceladasInicial, renderVacacionesResumenInicial, diasSegunParametrosServicioPreview, agregarMotivoV, abrirModalAgregarMotivo, guardarMotivoV, eliminarMotivoV, agregarAutorizadorV, abrirModalAgregarAutorizador, guardarAutorizadorV, eliminarAutorizadorV, seleccionarMotivoVacaciones, seleccionarAutorizadorV, filtrosDinamicosVacaciones } from './vacaciones.js';
+
 export const vacacionesScreenConfig = {
   vacaciones: {
     title: 'Vacaciones',

@@ -2,6 +2,8 @@
 
 export * from './psicotecnico.js';
 
+import { renderPsico, tabPsico, abrirNuevoPsico, abrirGestionPsico, guardarEtapasPsico, guardarPsico, aprobarPsico, rechazarPsico, revertirPsico, analizarInformePsicoIA, usarDatosIAInformePsico } from './psicotecnico.js';
+
 export const psicotecnicoScreenConfig = {
   psicotecnico: {
     title: 'Psicotécnico',

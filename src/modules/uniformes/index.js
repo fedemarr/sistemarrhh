@@ -2,6 +2,8 @@
 
 export * from './uniformes.js';
 
+import { renderUniformesInicial, filtrarUniformes, verEntrega, abrirNuevaEntrega, marcarEntregado, anularEntregaPorId, autocompletarUniforme, pintarTalles, abrirModalPrenda, guardarPrenda, anularPrenda, abrirModalPrueba, guardarPrueba, crearEntregaUniformeDesdeAlta } from './uniformes.js';
+
 export const uniformesScreenConfig = {
   uniformes: {
     title: 'Uniformes',

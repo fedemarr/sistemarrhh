@@ -2,6 +2,8 @@
 
 export * from './documentacion.js';
 
+import { renderDocum, tabDocum, filtrarDocum, abrirNuevaDocum, abrirGestionDocum, guardarDocum, recalcularVencAntec, recalcularVencLibreta, toggleSeccionLibreta, toggleSeccionCurso, aprobarDocum, excepcionDocum, bajaDocum, rechazarDocum, revertirDocum, analizarAntecedentesIA } from './documentacion.js';
+
 export const documentacionScreenConfig = {
   documentacion: {
     title: 'Documentación de ingreso',

@@ -2,6 +2,8 @@
 
 export * from './sanciones.js';
 
+import { renderSancionesInicial, renderSancionesInterno, tabSanciones, filtrarSanciones, verSancion, abrirNuevaSancion, abrirEditarSancionPorId, marcarCumplidaSancion, anularSancionPorId, autocompletarSancion, toggleTipoSancion } from './sanciones.js';
+
 export const sancionesScreenConfig = {
   sanciones: {
     title: 'Sanciones',

@@ -2,6 +2,8 @@
 
 export * from './preocupacional.js';
 
+import { renderPreocup, tabPreocup, filtrarPreocup, abrirNuevoPreocup, abrirGestionPreocup, guardarPreocup, aprobarPreocup, rechazarPreocup, revertirPreocup, bajaPreocup, analizarAptoMedicoIA, usarDatosIAApto } from './preocupacional.js';
+
 export const preocupacionalScreenConfig = {
   preocupacional: {
     title: 'Preocupacional',

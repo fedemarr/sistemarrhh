@@ -4,6 +4,10 @@ export * from './candidatos.js';
 export * from './calendario.js';
 export * from './importadorHistorico.js';
 
+import { tabCandPrincipal, renderCandidatos, filtrarCandidatos, toggleVerCandidatos, abrirNuevoCandidato, editarCandidatoPorId, abrirCitarPorId, guardarCita, registrarAsistencia, abrirResultadoPorId, guardarResultadoEntrevista, onChangeResultadoCand, aprobarCandidatoPorId, rechazarCandidatoPorId, pasarAPsicoPorId, abrirDetalleCandidatoPorId, abrirBajaCandidatoPorId, confirmarBajaCandidato, copiarLinkPostulacion, renderLinkPublico } from './candidatos.js';
+import { renderCalendario, cambiarSemana, irHoy, agendarTurno, agendarTurnoLibre, verTurno, confirmarCalTurno, eliminarCalTurno, vincularCandidatoTurno } from './calendario.js';
+import { renderImportadorHistorico, descargarPlantillaHistorico, confirmarImportHistorico } from './importadorHistorico.js';
+
 export const candidatosScreenConfig = {
   candidatos: {
     title: 'Candidatos',

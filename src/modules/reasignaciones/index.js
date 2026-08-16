@@ -2,6 +2,8 @@
 
 export * from './reasignaciones.js';
 
+import { renderReasignacionesInicial, abrirNuevaReasignacion, abrirModalReasDesde, abrirBorradorReasignacionPorId, buscarLegajoReas, sugerirServicioDestino, elegirSugerenciaDestino, guardarReasBorrador, guardarReas, verReasignacion, aprobarReas, rechazarReas, anularReas, ejecutarReas } from './reasignaciones.js';
+
 export const reasignacionesScreenConfig = {
   reasignaciones: {
     title: 'Reasignaciones',

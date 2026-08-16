@@ -4,6 +4,9 @@ export * from './movimientos.js';
 export * from './resultados.js';
 export * from './configuracion.js';
 
+import { renderReglasComp, agregarReglaComp, editarReglaComp, toggleReglaComp, anularReglaComp, resetearReglasDefault } from './configuracion.js';
+import { renderResultados, filtrarResultados, seleccionarResultadoAnio, verDetalleResultado, aprobarResultadoConclusion, exportarResultadosCSV } from './resultados.js';
+
 export const competenciaScreenConfig = {
   reglas_comp: {
     title: 'Reglas de competencia',

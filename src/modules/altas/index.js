@@ -2,6 +2,8 @@
 
 export * from './altas.js';
 
+import { renderAltas, filtrarAltas, abrirModalAlta, abrirAltaVacia, rechazarAlta, confirmarAlta, tabAlta, tabAltaSiguiente, tabAltaAnterior, onChangeZonaAlta, onChangePartidoAlta, onChangeLocalidadAlta, onChangeServicioAlta, toggleReingresante, buscarLegajoReingresante, agregarFilaPoliza, eliminarFilaPoliza, leerPolizas, renderPolizas, recalcularInicioObraSocial, poblarSelectsAltas, integracionSugerida } from './altas.js';
+
 export const altasScreenConfig = {
   altas: {
     title: 'Altas de asociados',

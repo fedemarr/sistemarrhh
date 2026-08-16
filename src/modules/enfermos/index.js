@@ -2,6 +2,8 @@
 
 export * from './enfermos.js';
 
+import { renderEnfermosInicial, renderInformeEnfermos, filtrarEnfermos, verEnfermo, abrirNuevoEnfermo, abrirEditarEnfermoPorId, marcarControladoEnfermo, darAltaEnfermo, cerrarEnfermo, anularEnfermoPorId, autocompletarEnfermo } from './enfermos.js';
+
 export const enfermosScreenConfig = {
   enfermos: {
     title: 'Enfermos',

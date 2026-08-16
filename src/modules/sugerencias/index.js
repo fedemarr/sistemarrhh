@@ -2,6 +2,8 @@
 
 export * from './sugerencias.js';
 
+import { renderSugerencias, abrirModalNuevaSugerencia, guardarSugerencia, verSugerencia, cerrarSugerencia, eliminarSugerencia, sugerenciasScreenInicio } from './sugerencias.js';
+
 export const sugerenciasScreenConfig = {
   sugerencias: {
     title: 'Sugerencias',
