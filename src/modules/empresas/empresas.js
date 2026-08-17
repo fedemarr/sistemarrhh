@@ -21,15 +21,17 @@ export function renderEmpresas() {
       <button class="btn" onclick="abrirNuevaEmpresa()">+ Nueva empresa</button>
     </div>
     <div class="tbl-wrap"><table class="tbl">
-      <thead><tr><th>Empresa</th><th>Estado</th><th>Usuarios</th><th>Alta</th><th>Acciones</th></tr></thead>
+      <thead><tr><th>Empresa</th><th>Estado</th><th>Usuarios</th><th>Admin email</th><th>Alta</th><th>Acciones</th></tr></thead>
       <tbody>
         ${empresas.map((e) => {
           const usuarios = (DB.usuarios || []).filter((u) => String(u.empresaId) === String(e.id));
+          const adminUsuario = usuarios.find((u) => u.perfil === 'Administrador total');
           const activa = e.activa !== false;
           return `<tr>
             <td><strong>${esc(e.nombre)}</strong><br/><code>${esc(e.id)}</code></td>
             <td>${activa ? '<span class="chip chip-verde">Activa</span>' : '<span class="chip chip-rojo">Inactiva</span>'}</td>
             <td>${usuarios.length}</td>
+            <td>${esc(adminUsuario?.email || '—')}</td>
             <td>${esc(e.fechaAlta || e.fecha_alta || '—')}</td>
             <td class="acciones">
               <button class="btn btn-secondary btn-sm" onclick="verEmpresa('${esc(String(e.id))}')">Ver</button>
@@ -37,7 +39,7 @@ export function renderEmpresas() {
               <button class="btn btn-${activa ? 'warning' : 'success'} btn-sm" onclick="toggleActivaEmpresa('${esc(String(e.id))}')">${activa ? 'Desactivar' : 'Activar'}</button>
             </td>
           </tr>`;
-        }).join('') || '<tr><td colspan="5" class="empty">Sin empresas creadas.</td></tr>'}
+        }).join('') || '<tr><td colspan="6" class="empty">Sin empresas creadas.</td></tr>'}
       </tbody>
     </table></div>
     <p class="muted">El formulario público <code>/postularme</code> registra candidatos; asigná manualmente la empresa desde el legajo/alta.</p>`;
@@ -58,6 +60,9 @@ export function abrirNuevaEmpresa() {
           <div class="field"><label>Dirección</label><input name="direccion" /></div>
           <div class="field"><label>Teléfono</label><input name="telefono" /></div>
           <div class="field"><label>Email de contacto</label><input type="email" name="emailContacto" /></div>
+          <div class="field"><label>Gmail del admin</label><input type="email" name="gmailUser" placeholder="admin@gmail.com" /></div>
+          <div class="field"><label>Contraseña de aplicación de Gmail</label><input type="password" name="gmailPass" placeholder="Contraseña de aplicación" /></div>
+          <div class="field"><label>Nombre remitente</label><input name="mailFromName" placeholder="(Usa el nombre de la empresa)" /></div>
         </div>
       </div>
       <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-empresa')">Cancelar</button><button type="submit" class="btn">Crear empresa</button></div>
@@ -75,7 +80,19 @@ export function abrirNuevaEmpresa() {
         if (data?.error) throw new Error(data.error);
         cerrarModal('modal-empresa');
         showToast(`Empresa creada: ${data.nombre || ''}`, 'ok');
-        return supaInit().then(() => renderEmpresas());
+        showToast(`Admin: ${datos.email} / ${datos.password}`, 'ok');
+        return supaInit().then(async () => {
+          if (datos.gmailUser || datos.gmailPass) {
+            const nuevaEmpresa = (DB.empresas || []).find(e => e.nombre === datos.nombre);
+            if (nuevaEmpresa) {
+              nuevaEmpresa.gmailUser = datos.gmailUser || '';
+              nuevaEmpresa.gmailPass = datos.gmailPass || '';
+              nuevaEmpresa.mailFromName = datos.mailFromName || datos.nombre;
+              await supaSync('empresas', nuevaEmpresa);
+            }
+          }
+          renderEmpresas();
+        });
       })
       .catch((e) => showToast(e.message, 'err'))
       .finally(() => { if (document.getElementById('form-empresa')) { const b = document.getElementById('form-empresa').querySelector('button[type=submit]'); b.disabled = false; b.textContent = 'Crear empresa'; } });

@@ -1,12 +1,13 @@
 // Recibos de sueldo — emisión, impresión y anulación.
 // Fuente de verdad: 03_Liquidacion.md §3.11.
 
-import { DB } from '../../state.js';
+import { DB, SESSION } from '../../state.js';
 import { supaSync } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast } from '../../shared/modal.js';
 import { esc, fechaISOToDisplay } from '../../shared/helpers.js';
 import { getCurrentUser } from '../../shared/auth.js';
 import { crearNotificacion } from '../../shared/notificaciones.js';
+import { enviarMail } from '../../shared/mail.js';
 import { obtenerHorasLiquidacion, redondear2, periodoLabel } from './liqUtils.js';
 
 export function getReciboById(id) {
@@ -159,7 +160,7 @@ export function emitirRecibo(id) {
   l.estado = 'Emitido';
   l.fechaEmision = new Date().toISOString();
   supaSync('liquidaciones', l)
-    .then(() => {
+    .then(async () => {
       showToast('Recibo emitido', 'ok');
       crearNotificacion({
         tipo: 'aviso_pago',
@@ -179,6 +180,18 @@ export function emitirRecibo(id) {
       });
       supaSync('comunicaciones', DB.comunicaciones[DB.comunicaciones.length - 1]).catch(() => {});
       renderLiquidaciones('emitidos');
+      try {
+        const aso = (DB.legajos || []).find(leg => String(leg.nro) === String(l.nroSocio));
+        if (aso?.email) {
+          await enviarMail({
+            to: aso.email,
+            subject: `Comprobante de pago - Período ${l.mes}/${l.anio}`,
+            html: `<h2>Comprobante de pago</h2><p>Hola ${l.nombreAsociado},</p><p>Se procesó tu pago del período ${l.mes}/${l.anio}.</p><p><strong>Sueldo bruto:</strong> $${redondear2(l.sueldoBruto)}</p><p><strong>Descuentos:</strong> $${redondear2(l.descuentosTotal)}</p><p><strong>Sueldo neto:</strong> $${redondear2(l.sueldoNeto)}</p><p>Saludos,<br/><strong>${SESSION.currentUser?.nombre || 'RRHH'}</strong></p>`
+          });
+        }
+      } catch (e) {
+        console.warn('No se pudo enviar email:', e.message);
+      }
     })
     .catch((e) => showToast(e.message, 'err'));
 }
