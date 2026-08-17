@@ -15,6 +15,16 @@
   --texto: #1f2937;
   --radio: 8px;
   --sombra: 0 2px 8px rgba(16, 42, 84, 0.08);
+  /* Colores de acento por etapa del legajo (headers de modal + cajas de adjuntos) */
+  --morado: #7c3aed;
+  --morado-claro: #f3e8fd;
+  --morado-borde: #d8b4fe;
+  --teal: #0e8fa3;
+  --teal-claro: #e0f6f9;
+  --teal-borde: #9be3ec;
+  --indigo: #4338ca;
+  --indigo-claro: #e8e6fb;
+  --indigo-borde: #c3bdf2;
 }
 
 * { box-sizing: border-box; }
@@ -149,10 +159,40 @@ table.tbl { width: 100%; border-collapse: collapse; background: #fff; font-size:
 .modal-xl { width: 1100px; }
 .modal-head {
   display: flex; align-items: center; justify-content: space-between; padding: 16px 20px;
-  border-bottom: 1px solid var(--borde);
+  border-bottom: 1px solid var(--borde); border-radius: 12px 12px 0 0;
 }
 .modal-head h2 { margin: 0; font-size: 16px; }
 .modal-close { background: none; border: 0; font-size: 22px; line-height: 1; color: var(--gris); }
+
+/* Header de color por etapa (psicotécnico/preocupacional/documentación/alta):
+   se agrega junto a "modal-head" -> class="modal-head accent psico". */
+.modal-head.accent { border-bottom: 0; color: #fff; }
+.modal-head.accent .modal-close { color: #fff; opacity: .85; }
+.modal-head.accent .modal-close:hover { color: #fff; opacity: 1; }
+.modal-head.psico { background: var(--morado); }
+.modal-head.preocup { background: var(--teal); }
+.modal-head.documentacion { background: var(--indigo); }
+.modal-head.altas { background: var(--verde); }
+
+/* Caja destacada para "subir archivo + Analizar con IA", con el tinte de la
+   etapa correspondiente (misma idea en los 4 módulos de ingreso). */
+.adjunto-box {
+  border: 1px dashed var(--borde); border-radius: var(--radio); padding: 14px; margin: 14px 0; background: var(--gris-claro);
+}
+.adjunto-box h4 { margin: 0 0 8px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.adjunto-box .muted { margin: 0 0 10px; }
+.adjunto-box.psico { background: var(--morado-claro); border-color: var(--morado-borde); }
+.adjunto-box.preocup { background: var(--teal-claro); border-color: var(--teal-borde); }
+.adjunto-box.documentacion { background: var(--indigo-claro); border-color: var(--indigo-borde); }
+
+/* Tabs tipo "pill" para wizards (Alta de asociado). */
+.wizard-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.wizard-tab {
+  padding: 6px 14px; border-radius: 20px; border: 1px solid var(--borde); background: #fff;
+  color: var(--gris); font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.wizard-tab.active { background: var(--verde); color: #fff; border-color: var(--verde); }
+.wizard-tab:hover:not(.active) { border-color: var(--verde); color: var(--verde); }
 .modal-close:hover { color: var(--rojo); }
 .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
 .modal-foot { padding: 14px 20px; border-top: 1px solid var(--borde); display: flex; justify-content: flex-end; gap: 10px; }

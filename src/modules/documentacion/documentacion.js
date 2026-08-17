@@ -178,35 +178,51 @@ export function abrirGestionDocum(id) {
   const d = getDocumById(id);
   if (!d) return;
   ensureModal('modal-docum-gestion', `
-    <div class="modal-head"><h2>Documentación — ${esc(d.nombre || '')}</h2><button class="modal-close" onclick="cerrarModal('modal-docum-gestion')">×</button></div>
+    <div class="modal-head accent documentacion"><h2>📁 Documentación — ${esc(d.nombre || '')}</h2><button class="modal-close" onclick="cerrarModal('modal-docum-gestion')">×</button></div>
     <form id="form-docum-gestion">
       <div class="modal-body">
         <div class="form-grid">
           <div class="field"><label>DNI</label><input value="${esc(d.dni)}" readonly /></div>
           <div class="field"><label>Estado</label><input value="${esc(d.estado)}${d.anulado ? ' (anulado)' : ''}" readonly /></div>
-          <div class="field"><label>Fecha de emisión antecedentes</label><input type="date" id="docum-fec-emision-antec" /></div>
-          <div class="field"><label>Antecedentes vence</label><input type="date" name="antecVencimiento" value="${esc(d.antecVencimiento || '')}" /></div>
-          <div class="field checkbox"><input type="checkbox" id="docum-togle-libreta" ${d.libretaAplica ? 'checked' : ''} /><label>Aplica libreta sanitaria</label></div>
-          <div class="field"><label>Libreta vence</label><input type="date" name="libretaVencimiento" value="${esc(d.libretaVencimiento || '')}" /></div>
-          <div class="field checkbox"><input type="checkbox" id="docum-togle-curso" ${d.cursoTiene ? 'checked' : ''} /><label>Tiene curso</label></div>
-          <div class="field"><label>Curso vence</label><input type="date" name="cursoVencimiento" value="${esc(d.cursoVencimiento || '')}" /></div>
+        </div>
+
+        <div class="grupo"><legend>📄 Antecedentes penales (obligatorio)</legend>
+          <div class="form-grid">
+            <div class="field"><label>Fecha de emisión</label><input type="date" id="docum-fec-emision-antec" /></div>
+            <div class="field"><label>Vence (auto, +12 meses)</label><input type="date" name="antecVencimiento" value="${esc(d.antecVencimiento || '')}" /></div>
+          </div>
+          <div class="adjunto-box documentacion">
+            <h4>🎙️ Certificados de antecedentes (se conserva historial)</h4>
+            ${htmlAdjuntos('documentacion', 'antecedentes', d.id)}
+            <div class="field"><input type="file" id="docum-gest-antecedentes" accept=".pdf,.jpg,.png" /></div>
+            <button type="button" class="btn btn-secondary" onclick="analizarAntecedentesIA('${esc(String(d.id))}')">🤖 Analizar con IA</button>
+          </div>
+        </div>
+
+        <div class="grupo"><legend>🟢 Libreta sanitaria</legend>
+          <div class="field checkbox"><input type="checkbox" id="docum-togle-libreta" ${d.libretaAplica ? 'checked' : ''} /><label>¿Requiere libreta sanitaria?</label></div>
+          <div class="field"><label>Vence</label><input type="date" name="libretaVencimiento" value="${esc(d.libretaVencimiento || '')}" /></div>
+          <div class="field"><label>Libreta sanitaria</label>${htmlAdjuntos('documentacion', 'libreta', d.id)}<input type="file" id="docum-gest-libreta" accept=".pdf,.jpg,.png" /></div>
+        </div>
+
+        <div class="grupo"><legend>🧢 Curso de manipulación de alimentos</legend>
+          <div class="field checkbox"><input type="checkbox" id="docum-togle-curso" ${d.cursoTiene ? 'checked' : ''} /><label>¿Tiene el curso?</label></div>
+          <div class="field"><label>Vence</label><input type="date" name="cursoVencimiento" value="${esc(d.cursoVencimiento || '')}" /></div>
+          <div class="field"><label>Certificado curso</label>${htmlAdjuntos('documentacion', 'curso', d.id)}<input type="file" id="docum-gest-curso" accept=".pdf,.jpg,.png" /></div>
+        </div>
+
+        <div class="form-grid">
           <div class="field full"><label>Observaciones</label><textarea name="observaciones" rows="3">${esc(d.observaciones || '')}</textarea></div>
           <div class="field full"><label>Motivo (rechazo/alta con excepción)</label><input name="motivo" value="${esc(d.motivo || '')}" /></div>
         </div>
-        <h4>Adjuntos</h4>
-        <div class="form-grid">
-          <div class="field"><label>Antecedentes</label>${htmlAdjuntos('documentacion', 'antecedentes', d.id)}<input type="file" id="docum-gest-antecedentes" accept=".pdf,.jpg,.png" /></div>
-          <div class="field"><label>Libreta sanitaria</label>${htmlAdjuntos('documentacion', 'libreta', d.id)}<input type="file" id="docum-gest-libreta" accept=".pdf,.jpg,.png" /></div>
-          <div class="field"><label>Certificado curso</label>${htmlAdjuntos('documentacion', 'curso', d.id)}<input type="file" id="docum-gest-curso" accept=".pdf,.jpg,.png" /></div>
-        </div>
         <div class="toolbar">
-          <button type="button" class="btn btn-success" onclick="aprobarDocum('${esc(String(d.id))}')">Aprobar</button>
+          <button type="button" class="btn btn-success" onclick="aprobarDocum('${esc(String(d.id))}')">✅ Aprobar</button>
           <button type="button" class="btn btn-warning" onclick="excepcionDocum('${esc(String(d.id))}')">Aprobar con excepción</button>
-          <button type="button" class="btn btn-danger" onclick="rechazarDocum('${esc(String(d.id))}')">Rechazar</button>
+          <button type="button" class="btn btn-danger" onclick="rechazarDocum('${esc(String(d.id))}')">❌ Rechazar</button>
           <button type="button" class="btn btn-secondary" onclick="bajaDocum('${esc(String(d.id))}')">Anular</button>
         </div>
       </div>
-      <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-docum-gestion')">Cerrar</button><button type="submit" class="btn">Guardar</button></div>
+      <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-docum-gestion')">Cerrar</button><button type="submit" class="btn">💾 Guardar</button></div>
     </form>`, { size: 'modal-lg' });
   document.getElementById('form-docum-gestion').addEventListener('submit', (ev) => {
     ev.preventDefault();

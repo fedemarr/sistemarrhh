@@ -170,7 +170,7 @@ export function abrirGestionPsico(id) {
   if (!p) return;
   const etapas = p.etapas || {};
   ensureModal('modal-psico-gestion', `
-    <div class="modal-head"><h2>Psicotécnico — ${esc(p.nombre || '')}</h2><button class="modal-close" onclick="cerrarModal('modal-psico-gestion')">×</button></div>
+    <div class="modal-head accent psico"><h2>🧠 Psicotécnico — ${esc(p.nombre || '')}</h2><button class="modal-close" onclick="cerrarModal('modal-psico-gestion')">×</button></div>
     <form id="form-psico-etapas">
       <div class="modal-body">
         <div class="form-grid">
@@ -182,10 +182,13 @@ export function abrirGestionPsico(id) {
           <div class="field"><label>Estado</label><input value="${esc(p.estado)}" readonly /></div>
           <div class="field full"><label>Observaciones</label><textarea name="observaciones" rows="2">${esc(p.observaciones || '')}</textarea></div>
         </div>
-        <h4>Adjuntos</h4>
-        <div class="form-grid">
-          <div class="field"><label>Informe psicotécnico</label>${htmlAdjuntos('psicotecnico', 'informe', p.id)}<input type="file" id="psico-gest-informe" accept=".pdf,.jpg,.png" /></div>
-          <div class="field"><label>Evaluación prelaboral</label>${htmlAdjuntos('psicotecnico', 'prelaboral', p.id)}<input type="file" id="psico-gest-prelaboral" accept=".pdf,.jpg,.png" /></div>
+        <div class="adjunto-box psico">
+          <h4>🎙️ Informe psicotécnico</h4>
+          <div class="form-grid">
+            <div class="field"><label>Informe psicotécnico</label>${htmlAdjuntos('psicotecnico', 'informe', p.id)}<input type="file" id="psico-gest-informe" accept=".pdf,.jpg,.png" /></div>
+            <div class="field"><label>Evaluación prelaboral</label>${htmlAdjuntos('psicotecnico', 'prelaboral', p.id)}<input type="file" id="psico-gest-prelaboral" accept=".pdf,.jpg,.png" /></div>
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="analizarInformePsicoIA('${esc(String(p.id))}')">🤖 Analizar con IA</button>
         </div>
         <div class="grupo"><legend>Etapas (${ETAPAS_PSICO.filter((e) => e.obligatoria).map((e) => e.label).join(' y ')} obligatorias)</legend>
           <div class="grid4">
@@ -193,12 +196,11 @@ export function abrirGestionPsico(id) {
           </div>
         </div>
         <div class="toolbar">
-          <button type="button" class="btn btn-secondary" onclick="analizarInformePsicoIA('${esc(String(p.id))}')">🤖 Analizar informe (IA)</button>
-          <button type="button" class="btn btn-success" onclick="aprobarPsico('${esc(String(p.id))}')">Aprobar</button>
-          <button type="button" class="btn btn-danger" onclick="rechazarPsico('${esc(String(p.id))}')">Rechazar</button>
+          <button type="button" class="btn btn-success" onclick="aprobarPsico('${esc(String(p.id))}')">✅ Aprobar</button>
+          <button type="button" class="btn btn-danger" onclick="rechazarPsico('${esc(String(p.id))}')">❌ Rechazar</button>
         </div>
       </div>
-      <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-psico-gestion')">Cerrar</button><button type="submit" class="btn">Guardar etapas</button></div>
+      <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-psico-gestion')">Cerrar panel</button><button type="submit" class="btn">💾 Guardar etapas</button></div>
     </form>`, { size: 'modal-lg' });
   document.getElementById('form-psico-etapas').addEventListener('submit', (ev) => {
     ev.preventDefault();

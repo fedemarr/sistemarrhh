@@ -151,7 +151,7 @@ export function abrirGestionPreocup(id) {
   const p = getPreocupById(id);
   if (!p) return;
   ensureModal('modal-preocup-gestion', `
-    <div class="modal-head"><h2>Preocupacional — ${esc(p.nombre || '')}</h2><button class="modal-close" onclick="cerrarModal('modal-preocup-gestion')">×</button></div>
+    <div class="modal-head accent preocup"><h2>🩺 Pre-ocupacional — ${esc(p.nombre || '')}</h2><button class="modal-close" onclick="cerrarModal('modal-preocup-gestion')">×</button></div>
     <form id="form-preocup-gestion">
       <div class="modal-body">
         <div class="form-grid">
@@ -164,19 +164,21 @@ export function abrirGestionPreocup(id) {
           </div>
           <div class="field full"><label>Observaciones</label><textarea name="observaciones" rows="2">${esc(p.observaciones || '')}</textarea></div>
         </div>
-        <h4>Adjuntos</h4>
-        <div class="form-grid">
-          <div class="field"><label>Apto médico</label>${htmlAdjuntos('preocupacional', 'apto', p.id)}<input type="file" id="preocup-gest-apto" accept=".pdf,.jpg,.png" /></div>
-          <div class="field"><label>Estudios complementarios</label>${htmlAdjuntos('preocupacional', 'estudios', p.id)}<input type="file" id="preocup-gest-estudios" accept=".pdf,.jpg,.png" /></div>
+        <div class="adjunto-box preocup">
+          <h4>📋 Apto médico (obligatorio para aprobar)</h4>
+          <div class="form-grid">
+            <div class="field"><label>Apto médico</label>${htmlAdjuntos('preocupacional', 'apto', p.id)}<input type="file" id="preocup-gest-apto" accept=".pdf,.jpg,.png" /></div>
+            <div class="field"><label>Estudios complementarios</label>${htmlAdjuntos('preocupacional', 'estudios', p.id)}<input type="file" id="preocup-gest-estudios" accept=".pdf,.jpg,.png" /></div>
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="analizarAptoMedicoIA('${esc(String(p.id))}')">🤖 Analizar con IA</button>
         </div>
         <div class="toolbar">
-          <button type="button" class="btn btn-success" onclick="aprobarPreocup('${esc(String(p.id))}')">Aprobar</button>
-          <button type="button" class="btn btn-danger" onclick="rechazarPreocup('${esc(String(p.id))}')">Rechazar</button>
+          <button type="button" class="btn btn-success" onclick="aprobarPreocup('${esc(String(p.id))}')">✅ Aprobar → Alta</button>
+          <button type="button" class="btn btn-danger" onclick="rechazarPreocup('${esc(String(p.id))}')">❌ Rechazar</button>
           <button type="button" class="btn btn-warning" onclick="bajaPreocup('${esc(String(p.id))}')">Desvincular</button>
-          <button type="button" class="btn btn-secondary" onclick="analizarAptoMedicoIA('${esc(String(p.id))}')">🤖 IA</button>
         </div>
       </div>
-      <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-preocup-gestion')">Cerrar</button><button type="submit" class="btn">Guardar cambios</button></div>
+      <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-preocup-gestion')">Cerrar</button><button type="submit" class="btn">💾 Guardar</button></div>
     </form>`, {});
   document.getElementById('form-preocup-gestion').addEventListener('submit', (ev) => {
     ev.preventDefault();

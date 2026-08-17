@@ -117,20 +117,20 @@ export function abrirModalAlta(id) {
   const integracion = integracionSugerida();
 
   ensureModal('modal-alta', `
-    <div class="modal-head">
-      <h2>Alta de asociado — ${esc(a.nombre || a.dni || 'nuevo')}</h2>
+    <div class="modal-head accent altas">
+      <h2>🏷️ Alta de asociado — ${esc(a.nombre || a.dni || 'nuevo')}</h2>
       <button class="modal-close" onclick="cerrarModal('modal-alta')">×</button>
     </div>
     <form id="form-alta">
       <div class="modal-body">
-        <div class="tabs" id="alta-tabs"></div>
+        <div class="wizard-tabs" id="alta-tabs"></div>
         <div id="alta-panel"></div>
         <div id="alta-polizas-wrap"></div>
       </div>
       <div class="modal-foot">
         <button type="button" class="btn btn-secondary" onclick="tabAltaAnterior()">← Anterior</button>
         <button type="button" class="btn" onclick="tabAltaSiguiente()">Siguiente →</button>
-        <button type="submit" class="btn btn-success" id="alta-confirmar-btn">Confirmar alta</button>
+        <button type="submit" class="btn btn-success" id="alta-confirmar-btn">✅ Confirmar alta</button>
       </div>
     </form>`, { size: 'modal-xl' });
 
@@ -197,7 +197,7 @@ export function tabAlta(idx) {
   const tabsHtml = [];
   const nombres = ['Identificación', 'Domicilio', 'Operativo', 'Uniforme', 'Capital', 'Seguros', 'Cuentas bancarias', 'Resumen'];
   for (let i = 0; i < ALTA_TABS; i++) {
-    tabsHtml.push(`<button type="button" class="tab-btn ${i === idx ? 'active' : ''}" onclick="tabAlta(${i})">${nombres[i]}</button>`);
+    tabsHtml.push(`<button type="button" class="wizard-tab ${i === idx ? 'active' : ''}" onclick="tabAlta(${i})">${nombres[i]}</button>`);
   }
   document.getElementById('alta-tabs').innerHTML = tabsHtml.join('');
   const panel = document.getElementById('alta-panel');
