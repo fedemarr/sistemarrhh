@@ -56,9 +56,15 @@ function actualizarMenu(key) {
 export function construirMenu() {
   const u = getCurrentUser();
   const sb = document.getElementById('sidebar');
-  const mods = u && PERFILES[u.perfil] ? PERFILES[u.perfil].modulos : [];
+  // El superadmin de la plataforma tiene su propio set fijo de módulos,
+  // independiente de lo que diga PERFILES para su perfil (que también lo
+  // usan los admins de cada empresa, que sí deben ver todo lo demás).
+  const mods = u?.esSuperadmin
+    ? ['empresas', 'usuarios_admin', 'dashboard_empresas', 'auditorias']
+    : (u && PERFILES[u.perfil] ? PERFILES[u.perfil].modulos : []);
   const todas = Object.keys(SCREEN_CONFIG);
-  const habilitados = mods === '*' ? todas : todas.filter((k) => (mods || []).includes(k));
+  // 'inicio' siempre visible: ningún PERFILES lo lista explícitamente.
+  const habilitados = mods === '*' ? todas : todas.filter((k) => k === 'inicio' || (mods || []).includes(k));
 
   const grupos = [
     { label: 'Inicio', keys: ['inicio'] },
@@ -68,7 +74,7 @@ export function construirMenu() {
     { label: 'Adelantos', keys: ['pedidos_adelantos', 'gestion_adelantos', 'mis_adelantos'] },
     { label: 'Transversales', keys: ['sugerencias', 'comunicaciones'] },
     ...(u?.esSuperadmin ? [{ label: 'Administración', keys: ['empresas', 'usuarios_admin', 'dashboard_empresas', 'auditorias'] }] : []),
-    ...((u?.esSuperadmin || u?.perfil === 'RRHH') ? [{ label: 'Configuración', keys: ['config_form_postulacion', 'config_form_entrevista'] }] : []),
+    ...((u?.esSuperadmin || u?.perfil === 'RRHH' || u?.perfil === 'Administrador total') ? [{ label: 'Configuración', keys: ['config_form_postulacion', 'config_form_entrevista'] }] : []),
   ];
 
   let html = '<div class="brand"><div class="logo">G</div><div>' + esc(APP.nombre) + '</div></div><div class="menu">';

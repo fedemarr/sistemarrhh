@@ -44,9 +44,22 @@ export function initDB() {
 
 // === Perfiles y menú por perfil ===
 export const PERFILES = {
+  // Nota: este perfil lo usan dos tipos de cuenta distintos:
+  //  1) el superadmin de la plataforma (esSuperadmin=true) — el menú de
+  //     Administración se le arma aparte en construirMenu(), ignorando esta lista.
+  //  2) el admin de cada empresa (esSuperadmin=false, creado por la Edge
+  //     Function crear-empresa) — a este sí se le aplican estos módulos, y
+  //     debe ver todo el sistema dentro de su empresa.
   'Administrador total': {
-    modulos: ['empresas', 'usuarios_admin', 'dashboard_empresas', 'auditorias'],
-    desc: 'Superadmin: gestión de empresas, usuarios, dashboard financiero y auditorías.',
+    modulos: [
+      'pedidos', 'candidatos', 'psicotecnico', 'preocupacional', 'documentacion', 'altas', 'legajos', 'reasignaciones',
+      'capacitaciones', 'vacaciones', 'descansos', 'competencia', 'sanciones', 'enfermos', 'legales', 'uniformes',
+      'categorias', 'smvm', 'liquidacion_horas', 'liq_admin', 'mantenimiento', 'retenes', 'liquidaciones',
+      'monotributos', 'retenciones', 'descuentos', 'paritarias', 'feriados',
+      'pedidos_adelantos', 'gestion_adelantos', 'sugerencias', 'comunicaciones',
+      'config_form_postulacion', 'config_form_entrevista',
+    ],
+    desc: 'Admin de empresa: acceso total a los módulos de su empresa (selección, personal, liquidación, adelantos, configuración).',
   },
   RRHH: {
     modulos: [
