@@ -276,8 +276,8 @@ export async function analizarAptoMedicoIA(id) {
   if (!p) return;
   showToast('Analizando apto médico con IA…', 'warn');
   try {
-    const prompt = `Analiza este apto médico y determina si el candidato es apto o no apto para el trabajo. Fundamenta tu respuesta.\n\nDatos:\n- Nombre: ${p.nombre}\n- DNI: ${p.dni}\n- Prestador: ${p.prestador}\n- Fecha turno: ${p.fechaTurno}\n- Fecha resultado: ${p.fechaResultado}\n- Resultado: ${p.resultado}\n- Observaciones: ${p.observaciones || 'Sin observaciones'}`;
-    const respuesta = await analizarConGemini(prompt);
+    const prompt = `Analizá el apto médico adjunto (documento real, no inventes nada que no figure en él). Necesito puntualmente:\n1. La fecha que figura en el documento.\n2. El resultado real tal como está escrito ahí: ¿APTO, APTO CON OBSERVACIONES, o NO APTO?\n3. Un resumen breve de las observaciones o restricciones que indique, si las hay.\nSi alguno de estos datos no aparece en el documento, decilo explícitamente en vez de inventarlo o suponerlo.\n\nDatos de referencia del candidato (para contexto, no reemplazan lo que diga el documento): ${p.nombre}, DNI ${p.dni}, prestador ${p.prestador || 'sin dato'}.`;
+    const respuesta = await analizarConGemini({ etapa: 'preocupacional', tipo: 'apto', refIdLocal: p.id, prompt });
     ensureModal('modal-ia-resultado', `
       <div class="modal-head"><h2>Resultado IA — Apto Médico</h2><button class="modal-close" onclick="cerrarModal('modal-ia-resultado')">×</button></div>
       <div class="modal-body"><pre style="white-space:pre-wrap;font-size:0.9em">${esc(respuesta)}</pre></div>

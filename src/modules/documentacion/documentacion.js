@@ -343,8 +343,8 @@ export async function analizarAntecedentesIA(id) {
   if (!d) return;
   showToast('Analizando antecedentes con IA…', 'warn');
   try {
-    const prompt = `Analiza estos antecedentes penales y documentación de ingreso. ¿Hay observaciones que impidan el alta?\n\nDatos:\n- Nombre: ${d.nombre}\n- DNI: ${d.dni}\n- Estado: ${d.estado}\n- Antecedentes vencimiento: ${d.antecVencimiento || 'Sin dato'}\n- Libreta aplica: ${d.libretaAplica ? 'Sí' : 'No'}\n- Libreta vencimiento: ${d.libretaVencimiento || 'Sin dato'}\n- Curso tiene: ${d.cursoTiene ? 'Sí' : 'No'}\n- Curso vencimiento: ${d.cursoVencimiento || 'Sin dato'}\n- Motivo: ${d.motivo || 'Sin motivo'}\n- Observaciones: ${d.observaciones || 'Sin observaciones'}`;
-    const respuesta = await analizarConGemini(prompt);
+    const prompt = `Analizá el certificado de antecedentes penales adjunto (documento real, no inventes nada que no figure en él). Necesito puntualmente:\n1. La fecha de emisión que figura en el documento.\n2. El resultado real: ¿registra antecedentes o no (certificado positivo/negativo)?\n3. Cualquier observación relevante para decidir si hay algo que impida el alta del candidato.\nSi alguno de estos datos no aparece en el documento, decilo explícitamente en vez de inventarlo o suponerlo.\n\nDatos de referencia (para contexto, no reemplazan lo que diga el documento): ${d.nombre}, DNI ${d.dni}.`;
+    const respuesta = await analizarConGemini({ etapa: 'documentacion', tipo: 'antecedentes', refIdLocal: d.id, prompt });
     ensureModal('modal-ia-resultado', `
       <div class="modal-head"><h2>Resultado IA — Antecedentes</h2><button class="modal-close" onclick="cerrarModal('modal-ia-resultado')">×</button></div>
       <div class="modal-body"><pre style="white-space:pre-wrap;font-size:0.9em">${esc(respuesta)}</pre></div>

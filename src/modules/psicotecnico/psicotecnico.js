@@ -314,9 +314,8 @@ export async function analizarInformePsicoIA(id) {
   if (!p) return;
   showToast('Analizando informe psicotécnico con IA…', 'warn');
   try {
-    const etapas = p.etapas || {};
-    const prompt = `Analiza este informe psicotécnico y determina si el candidato es apto. Evaluá las capacidades cognitivas, personales y sociales.\n\nDatos:\n- Nombre: ${p.nombre}\n- DNI: ${p.dni}\n- Fecha realización: ${p.fechaRealizacion}\n- Resultado actual: ${p.resultado}\n- Etapas completadas: Psicotécnico=${etapas.psicotecnico ? 'Sí' : 'No'}, Prelaboral=${etapas.prelaboral ? 'Sí' : 'No'}, Antecedentes=${etapas.antecedentes ? 'Sí' : 'No'}, Libreta=${etapas.libreta ? 'Sí' : 'No'}\n- Observaciones: ${p.observaciones || 'Sin observaciones'}`;
-    const respuesta = await analizarConGemini(prompt);
+    const prompt = `Analizá el informe psicotécnico adjunto (documento real, no inventes nada que no figure en él). Necesito puntualmente:\n1. La fecha que figura en el documento (de realización o de emisión).\n2. El resultado/dictamen real tal como está escrito ahí: ¿APTO, NO APTO, o apto con alguna condición/observación?\n3. Un resumen breve de las observaciones o fundamentos que da el informe.\nSi alguno de estos datos no aparece en el documento, decilo explícitamente en vez de inventarlo o suponerlo.\n\nDatos de referencia del candidato (para contexto, no reemplazan lo que diga el documento): ${p.nombre}, DNI ${p.dni}.`;
+    const respuesta = await analizarConGemini({ etapa: 'psicotecnico', tipo: 'informe', refIdLocal: p.id, prompt });
     ensureModal('modal-ia-resultado', `
       <div class="modal-head"><h2>Resultado IA — Informe Psicotécnico</h2><button class="modal-close" onclick="cerrarModal('modal-ia-resultado')">×</button></div>
       <div class="modal-body"><pre style="white-space:pre-wrap;font-size:0.9em">${esc(respuesta)}</pre></div>
