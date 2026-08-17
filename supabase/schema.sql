@@ -680,6 +680,23 @@ create table if not exists public.config_form_entrevista (
   created_at timestamptz default now(), updated_at timestamptz default now()
 );
 
+-- ---- Calendario de entrevistas (config por empresa) --------------------------
+-- Un solo row por empresa (índice único en empresa_id). La lee/escribe el
+-- admin desde Candidatos → Calendario; la lee también la Edge Function
+-- agendar-turno (con service_role, sin RLS) para armar la grilla pública.
+create table if not exists public.calendario_config (
+  id_local text primary key,
+  empresa_id text not null,
+  dias_habilitados jsonb not null default '[1,2,3,4,5]'::jsonb,
+  hora_desde text not null default '09:00',
+  hora_hasta text not null default '17:00',
+  duracion_min integer not null default 20,
+  max_por_franja integer not null default 2,
+  responsable text default '',
+  created_at timestamptz default now(), updated_at timestamptz default now()
+);
+create unique index if not exists calendario_config_empresa_uidx on public.calendario_config (empresa_id);
+
 -- ---- Comunicaciones ----------------------------------------------------------
 create table if not exists public.comunicaciones (
   id_local text primary key,

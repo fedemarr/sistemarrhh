@@ -163,6 +163,7 @@ export const _SM = {
   logs: 'logs',
   configFormPostulacion: 'config_form_postulacion',
   configFormEntrevista: 'config_form_entrevista',
+  calendarioConfig: 'calendario_config',
   comunicaciones: 'comunicaciones',
 };
 

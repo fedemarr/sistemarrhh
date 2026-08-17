@@ -285,7 +285,7 @@ export function rechazarPsico(id, motivo) {
   // Actualiza el candidato original con el motivo
   if (p.candidatoId) {
     const c = (DB.candidatos || []).find((x) => String(x.id) === String(p.candidatoId));
-    if (c && c.estado === 'Aprobado') {
+    if (c && c.estado === 'En Psicotécnico') {
       c.estado = 'Rechazado';
       c.motivoRechazo = motivo || 'No apto en psicotécnico';
       supaSync('candidatos', c).catch(() => {});

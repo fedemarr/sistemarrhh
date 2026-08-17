@@ -1,6 +1,12 @@
-// Agendar entrevista — formulario público que registra candidatos con estado "Citado".
+// Agendar entrevista — formulario público con grilla de horarios disponibles.
+// El candidato elige día/hora de una grilla (como la de Candidatos → Calendario)
+// y al confirmar, la Edge Function agendar-turno crea el turno y actualiza (o
+// crea) su registro en candidatos con estado "Citado". La disponibilidad y la
+// reserva pasan siempre por esa función: nunca se consultan ni actualizan
+// candidatos/turnos directo desde el navegador, así no se filtran nombres de
+// otros postulantes a un desconocido que abre el link.
 
-import { getPublicClient, hayConfigSupabase, _toSnakeRow } from './shared/supabase.js';
+import { getPublicClient, hayConfigSupabase } from './shared/supabase.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -8,16 +14,8 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-const DEFAULT_CAMPOS = [
-  { key: 'nombre', label: 'Nombre', type: 'text', required: true, order: 1 },
-  { key: 'apellido', label: 'Apellido', type: 'text', required: true, order: 2 },
-  { key: 'dni', label: 'DNI', type: 'text', required: true, order: 3 },
-  { key: 'observaciones', label: 'Observaciones', type: 'textarea', required: false, order: 4 },
-];
-
 function getUrlParam(name) {
-  const params = new URLSearchParams(window.location.search);
-  return params.get(name) || '';
+  return new URLSearchParams(window.location.search).get(name) || '';
 }
 
 function mostrarEstado(ok, msg) {
@@ -28,40 +26,90 @@ function mostrarEstado(ok, msg) {
   }
 }
 
-function renderCampo(c, defaults) {
-  const val = defaults?.[c.key] || '';
-  const req = c.required ? ' required' : '';
-  const reqLabel = c.required ? ' *' : '';
-  const id = `campo-${c.key}`;
-  if (c.type === 'select') {
-    const opts = (c.options || '').split(',').map((o) => o.trim()).filter(Boolean);
-    return `<div class="field"><label for="${id}">${esc(c.label)}${reqLabel}</label><select name="${esc(c.key)}" id="${id}"${req}><option value="">Seleccionar…</option>${opts.map((o) => `<option value="${esc(o)}" ${val === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`;
+let _slotElegido = null; // { fecha, hora }
+
+function diasGrilla(desde, dias) {
+  const out = [];
+  const base = new Date(desde + 'T00:00:00');
+  for (let i = 0; i < dias; i++) {
+    const d = new Date(base);
+    d.setDate(base.getDate() + i);
+    out.push({
+      fecha: d.toISOString().slice(0, 10),
+      diaSemana: d.getDay(),
+      label: d.toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: '2-digit' }),
+    });
   }
-  if (c.type === 'textarea') {
-    return `<div class="field full"><label for="${id}">${esc(c.label)}${reqLabel}</label><textarea name="${esc(c.key)}" id="${id}" rows="3"${req}>${esc(val)}</textarea></div>`;
-  }
-  if (c.type === 'file') {
-    return `<div class="field full"><label for="${id}">${esc(c.label)}${reqLabel}</label><input type="file" name="${esc(c.key)}" id="${id}"${req} /></div>`;
-  }
-  return `<div class="field"><label for="${id}">${esc(c.label)}${reqLabel}</label><input type="${esc(c.type || 'text')}" name="${esc(c.key)}" id="${id}" value="${esc(val)}"${req} /></div>`;
+  return out;
 }
 
-function renderForm(campos, instrucciones, defaults, empresaId) {
+function renderGrilla(disponibilidad) {
+  const { config, franjas, ocupados, desde } = disponibilidad;
+  const dias = diasGrilla(desde, 10).filter((d) => (config.dias_habilitados || []).includes(d.diaSemana));
+  if (!dias.length || !franjas.length) {
+    return '<p class="muted">No hay horarios configurados todavía. Contactá a la empresa directamente.</p>';
+  }
+  let html = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Hora</th>' +
+    dias.map((d) => `<th>${esc(d.label)}</th>`).join('') + '</tr></thead><tbody>';
+  for (const f of franjas) {
+    html += `<tr><td><strong>${f}</strong></td>`;
+    for (const d of dias) {
+      const key = `${d.fecha}|${f}`;
+      const ocupado = ocupados[key] || 0;
+      const lleno = ocupado >= config.max_por_franja;
+      const clase = lleno ? 'chip-rojo' : 'chip-verde';
+      const texto = lleno ? 'Completo' : '+ Libre';
+      html += lleno
+        ? `<td><span class="chip ${clase}" style="display:block;text-align:center;opacity:0.6">${texto}</span></td>`
+        : `<td style="cursor:pointer" data-fecha="${esc(d.fecha)}" data-hora="${esc(f)}" onclick="window.__seleccionarSlot('${esc(d.fecha)}','${esc(f)}')">
+            <span class="chip ${clase}" style="display:block;text-align:center" id="slot-${esc(d.fecha)}-${esc(f)}">${texto}</span>
+          </td>`;
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function marcarSeleccion() {
+  document.querySelectorAll('[id^="slot-"]').forEach((el) => el.classList.remove('chip-azul'));
+  document.querySelectorAll('[id^="slot-"]').forEach((el) => { if (!el.classList.contains('chip-rojo')) el.classList.add('chip-verde'); });
+  if (!_slotElegido) return;
+  const el = $(`slot-${_slotElegido.fecha}-${_slotElegido.hora}`);
+  if (el) { el.classList.remove('chip-verde'); el.classList.add('chip-azul'); el.textContent = 'Elegido ✓'; }
+  const resumen = $('agendar-slot-elegido');
+  if (resumen) resumen.textContent = `Turno elegido: ${_slotElegido.fecha} ${_slotElegido.hora}`;
+}
+
+window.__seleccionarSlot = (fecha, hora) => {
+  _slotElegido = { fecha, hora };
+  marcarSeleccion();
+};
+
+function renderPagina(disponibilidad, empresaId, defaults, instrucciones) {
   const cont = $('agendar-form-container');
-  const sorted = [...campos].sort((a, b) => (a.order || 0) - (b.order || 0));
   cont.innerHTML = `
     <div id="agendar-err" class="login-err"></div>
     ${instrucciones ? `<div class="card" style="margin-bottom:16px;padding:12px"><p>${esc(instrucciones)}</p></div>` : ''}
+    <p class="sub">Elegí un día y horario, y completá tus datos.</p>
+    ${renderGrilla(disponibilidad)}
+    <p id="agendar-slot-elegido" class="muted" style="margin-top:8px">Todavía no elegiste un turno.</p>
     <form id="form-agendar">
-      <div class="form-grid">
-        ${sorted.map((c) => renderCampo(c, defaults)).join('')}
+      <div class="form-grid" style="margin-top:12px">
+        <div class="field"><label>Nombre *</label><input name="nombre" required value="${esc(defaults.nombre || '')}" /></div>
+        <div class="field"><label>Apellido *</label><input name="apellido" required /></div>
+        <div class="field"><label>DNI *</label><input name="dni" required inputmode="numeric" value="${esc(defaults.dni || '')}" /></div>
+        <div class="field"><label>Teléfono</label><input name="telefono" type="tel" /></div>
+        <div class="field"><label>Email</label><input name="email" type="email" /></div>
+        <div class="field full"><label>Observaciones</label><textarea name="observaciones" rows="2"></textarea></div>
       </div>
-      <button type="submit" class="btn">Enviar datos</button>
+      <button type="submit" class="btn">Confirmar turno</button>
     </form>`;
-  $('form-agendar').addEventListener('submit', (ev) => { ev.preventDefault(); enviar(campos, empresaId); });
+  $('form-agendar').addEventListener('submit', (ev) => { ev.preventDefault(); enviar(empresaId); });
 }
 
-async function enviar(campos, empresaId) {
+async function enviar(empresaId) {
+  if (!_slotElegido) { mostrarEstado(false, 'Elegí un día y horario de la grilla antes de confirmar.'); return; }
   const form = $('form-agendar');
   if (!form) return;
   const btn = form.querySelector('button[type=submit]');
@@ -75,49 +123,56 @@ async function enviar(campos, empresaId) {
   if (!nombre || !apellido || !dni) { mostrarEstado(false, 'Nombre, apellido y DNI son obligatorios.'); return; }
 
   btn.disabled = true;
-  btn.textContent = 'Enviando…';
+  btn.textContent = 'Confirmando…';
   try {
-    const candidato = {
-      id: Date.now().toString(),
-      empresaId,
-      nombre,
-      apellido,
-      dni,
-      telefono: (datos.telefono || '').trim(),
-      email: (datos.email || '').trim(),
-      observaciones: (datos.observaciones || '').trim(),
-      estado: 'Citado',
-      fecha: new Date().toISOString(),
-      origen: 'agendar-entrevista',
-    };
     const client = getPublicClient();
-    const { error } = await client.from('candidatos').insert([_toSnakeRow(candidato)]);
-    if (error) throw new Error(error.message);
-    mostrarEstado(true, '¡Datos enviados! Te contactaremos para confirmar la entrevista.');
+    const { data, error } = await client.functions.invoke('agendar-turno', {
+      body: {
+        action: 'reservar',
+        empresaId,
+        fecha: _slotElegido.fecha,
+        hora: _slotElegido.hora,
+        nombre,
+        apellido,
+        dni,
+        telefono: (datos.telefono || '').trim(),
+        email: (datos.email || '').trim(),
+        observaciones: (datos.observaciones || '').trim(),
+      },
+    });
+    if (error) throw new Error(error.context?.message || error.message);
+    if (data?.error) throw new Error(data.error);
+    mostrarEstado(true, `¡Turno confirmado para el ${_slotElegido.fecha} a las ${_slotElegido.hora}! Te esperamos.`);
     form.reset();
+    form.querySelector('button[type=submit]').remove();
   } catch (e) {
-    mostrarEstado(false, `No se pudo enviar: ${e.message}`);
-  } finally {
+    mostrarEstado(false, `No se pudo confirmar: ${e.message}`);
     btn.disabled = false;
-    btn.textContent = 'Enviar datos';
+    btn.textContent = 'Confirmar turno';
   }
 }
 
-async function cargarConfig(empresaId) {
-  if (!hayConfigSupabase() || !empresaId) return null;
+async function cargarDisponibilidad(empresaId) {
+  const client = getPublicClient();
+  const { data, error } = await client.functions.invoke('agendar-turno', {
+    body: { action: 'disponibilidad', empresaId, dias: 14 },
+  });
+  if (error) throw new Error(error.context?.message || error.message);
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+// Solo el texto de "instrucciones" (configurable en Configuración → Form
+// entrevista) se sigue usando acá; los "campos" personalizados de esa
+// pantalla quedaron reemplazados por la grilla + los datos personales fijos.
+async function cargarInstrucciones(empresaId) {
+  if (!hayConfigSupabase()) return '';
   try {
     const client = getPublicClient();
-    const { data, error } = await client.from('config_form_entrevista').select('*').eq('empresa_id', empresaId).limit(1);
-    if (error || !data || !data.length) return null;
-    const row = data[0];
-    let campos = row.campos;
-    if (typeof campos === 'string') {
-      try { campos = JSON.parse(campos); } catch { campos = null; }
-    }
-    if (!campos || !campos.length) return null;
-    return { campos, instrucciones: row.instrucciones || '' };
+    const { data } = await client.from('config_form_entrevista').select('instrucciones').eq('empresa_id', empresaId).limit(1);
+    return data?.[0]?.instrucciones || '';
   } catch {
-    return null;
+    return '';
   }
 }
 
@@ -131,17 +186,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     mostrarEstado(false, 'Este link no es válido: falta identificar la empresa. Pedile a la empresa que te reenvíe el link.');
     return;
   }
-  const defaults = {};
-  const dni = getUrlParam('dni');
-  const nombre = getUrlParam('nombre');
-  if (dni) defaults.dni = dni;
-  if (nombre) defaults.nombre = nombre;
-
-  const config = await cargarConfig(empresaId);
-  renderForm(
-    config?.campos || DEFAULT_CAMPOS,
-    config?.instrucciones || '',
-    defaults,
-    empresaId
-  );
+  const defaults = { dni: getUrlParam('dni'), nombre: getUrlParam('nombre') };
+  try {
+    const [disponibilidad, instrucciones] = await Promise.all([
+      cargarDisponibilidad(empresaId),
+      cargarInstrucciones(empresaId),
+    ]);
+    renderPagina(disponibilidad, empresaId, defaults, instrucciones);
+  } catch (e) {
+    mostrarEstado(false, `No se pudo cargar la disponibilidad: ${e.message}`);
+  }
 });

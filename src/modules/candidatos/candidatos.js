@@ -8,7 +8,9 @@ import { esc, esDniValido, fechaISOToDisplay, displayToISO, calcularEdad } from 
 import { getCurrentUser } from '../../shared/auth.js';
 
 export const ESTADOS_ACTIVOS_CAND = ['Precandidato', 'Sin citar', 'Citado', 'Entrevistado', 'Aprobado'];
-export const ESTADOS_HISTORICO_CAND = ['Rechazado', 'Baja', 'Caducado', 'MT Social', 'MT con deuda'];
+// 'En Psicotécnico': una vez que se manda al candidato a esa etapa, sale de
+// Activos en la pestaña Candidatos (ahora se sigue desde el módulo Psicotécnico).
+export const ESTADOS_HISTORICO_CAND = ['En Psicotécnico', 'Rechazado', 'Baja', 'Caducado', 'MT Social', 'MT con deuda'];
 export const MOTIVOS_RECHAZO = ['No cubre perfil', 'Falta de disponibilidad', 'No asistió', 'Perfil laboral', 'Otro'];
 export const MEDIOS = ['Redes', 'Referido', 'Web', 'Volante', 'Otro'];
 
@@ -94,7 +96,7 @@ export function toggleVerCandidatos(ver) {
 }
 
 function chipEstadoCand(e) {
-  const cls = e === 'Aprobado' ? 'chip-verde' : e === 'Rechazado' || e === 'Baja' ? 'chip-rojo' : e === 'Entrevistado' ? 'chip-naranja' : e === 'Citado' ? 'chip-azul' : e === 'Precandidato' ? 'chip-gris' : 'chip-gris';
+  const cls = e === 'Aprobado' ? 'chip-verde' : e === 'Rechazado' || e === 'Baja' ? 'chip-rojo' : e === 'Entrevistado' ? 'chip-naranja' : e === 'Citado' ? 'chip-azul' : e === 'En Psicotécnico' ? 'chip-azul' : e === 'Precandidato' ? 'chip-gris' : 'chip-gris';
   return `<span class="chip ${cls}">${esc(e)}</span>`;
 }
 
@@ -437,7 +439,9 @@ export function pasarAPsicoPorId(id) {
     observaciones: '',
   };
   DB.psicos.push(psico);
-  supaSync('psicos', psico)
+  // Sale de "Activos" en Candidatos: a partir de ahora se sigue desde Psicotécnico.
+  c.estado = 'En Psicotécnico';
+  Promise.all([supaSync('psicos', psico), supaSync('candidatos', c)])
     .then(() => { showToast('Candidato enviado a Psicotécnico', 'ok'); renderCandidatos(); })
     .catch((e) => showToast(e.message, 'err'));
 }
@@ -635,7 +639,7 @@ export function abrirMensajeEntrevista(id) {
   const linkAgendar = `${location.origin}/agendar-entrevista?dni=${encodeURIComponent(c.dni || '')}&nombre=${encodeURIComponent(c.nombre || '')}&empresa=${encodeURIComponent(empresaId)}`;
   const templates = [
     `Hola ${nombre}, te contactamos de [empresa]. ¿Podrías confirmarnos tu disponibilidad para una entrevista presencial? ¿Qué día y horario te viene mejor?`,
-    `Hola ${nombre}, quedamos en coordinar una entrevista. Te paso el link para que completes tus datos: ${linkAgendar}`,
+    `Hola ${nombre}, quedamos en coordinar una entrevista. Te paso el link para que elijas el día y horario que te quede mejor: ${linkAgendar}`,
     `Hola ${nombre}, pasaste a la etapa de pre-selección. Te citamos el ${fecha} a las ${hora}. ¿Confirmas asistencia?`,
   ];
   ensureModal('modal-mensaje-entrevista', `

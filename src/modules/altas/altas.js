@@ -550,7 +550,10 @@ export function confirmarAlta(id) {
     .then(() => {
       showToast(`Alta completada — asociado N° ${nro}${cbuMsg}`, 'ok');
       cerrarModal('modal-alta');
-      renderAltas();
+      // El legajo ya se creó arriba (DB.legajos.push) — va directo a Legajos
+      // y abre la ficha recién creada, en vez de quedarse en Altas.
+      if (window.navTo) window.navTo('legajos');
+      if (window.verLegajo) window.verLegajo(nro);
     })
     .catch((e) => {
       showToast('Error al confirmar el alta: ' + e.message, 'err');
