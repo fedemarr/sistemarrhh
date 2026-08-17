@@ -121,7 +121,7 @@ function accionesCandidato(c) {
     a.push(`<button class="btn btn-secondary btn-sm" onclick="abrirMensajeEntrevista('${esc(String(c.id))}')">Enviar mensaje</button>`);
   }
   if (c.estado === 'Citado') {
-    a.push(`<button class="btn btn-warning btn-sm" onclick="registrarAsistencia('${esc(String(c.id))}')">Registrar asistencia</button>`);
+    a.push(`<button class="btn btn-warning btn-sm" onclick="abrirAsistenciaPorId('${esc(String(c.id))}')">¿Asistió?</button>`);
     a.push(`<button class="btn btn-secondary btn-sm" onclick="abrirMensajeEntrevista('${esc(String(c.id))}')">Enviar mensaje</button>`);
   }
   if (c.estado === 'Entrevistado') {
@@ -288,13 +288,39 @@ export function guardarCita(id, fechaCita, horaCita) {
   return supaSync('candidatos', c);
 }
 
-export function registrarAsistencia(id) {
+export function abrirAsistenciaPorId(id) {
   const c = getCandById(id);
   if (!c) return;
-  c.asistio = true;
-  c.estado = 'Entrevistado';
+  ensureModal('modal-asistencia', `
+    <div class="modal-head"><h2>¿Asistió a la entrevista? — ${esc(c.apellido)}, ${esc(c.nombre)}</h2><button class="modal-close" onclick="cerrarModal('modal-asistencia')">×</button></div>
+    <div class="modal-body">
+      <p>Cita: ${esc(c.fechaCita ? fechaISOToDisplay(c.fechaCita) + ' ' + (c.horaCita || '') : '—')}</p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-asistencia')">Cancelar</button>
+      <button type="button" class="btn btn-danger" onclick="registrarAsistenciaPorId('${esc(String(c.id))}', false)">No asistió</button>
+      <button type="button" class="btn btn-success" onclick="registrarAsistenciaPorId('${esc(String(c.id))}', true)">Sí, asistió</button>
+    </div>`, {});
+}
+
+export function registrarAsistenciaPorId(id, asistio) {
+  const c = getCandById(id);
+  if (!c) return;
+  c.asistio = asistio;
+  if (asistio) {
+    c.estado = 'Entrevistado';
+  } else {
+    // No asistió: no tiene sentido seguir el flujo, se rechaza directo con
+    // el motivo correspondiente (ya existe en el catálogo de motivos).
+    c.estado = 'Rechazado';
+    c.motivoRechazo = 'No asistió';
+  }
   supaSync('candidatos', c)
-    .then(() => { showToast('Asistencia registrada — entrevistado', 'ok'); renderCandidatos(); })
+    .then(() => {
+      cerrarModal('modal-asistencia');
+      showToast(asistio ? 'Asistencia registrada — pasa a Entrevistado' : 'Marcado como no asistió — rechazado', asistio ? 'ok' : 'warn');
+      renderCandidatos();
+    })
     .catch((e) => showToast(e.message, 'err'));
 }
 
@@ -390,6 +416,7 @@ export function pasarAPsicoPorId(id) {
     showToast('El candidato debe estar Aprobado para pasar a psicotécnico.', 'err');
     return;
   }
+  if (!confirm(`¿Pasar a ${c.apellido}, ${c.nombre} a la etapa de Psicotécnico?`)) return;
   if (yaTienePsicoActivo(c.dni)) {
     showToast(`Ya existe una evaluación psicotécnica activa para el DNI ${c.dni}.`, 'warn');
     return;
@@ -472,8 +499,17 @@ export function confirmarBajaCandidato(id, motivo) {
   return supaSync('candidatos', c);
 }
 
+// El link lleva SIEMPRE la empresa en la URL (?empresa=<id>): el formulario
+// público es uno solo para todo el sistema, y sin ese dato el candidato se
+// guarda sin empresa asignada -> queda invisible para tu usuario (las
+// políticas de RLS solo te dejan ver candidatos de tu propia empresa).
+export function linkPublicoPostulacion() {
+  const empresaId = getCurrentUser()?.empresaId || '';
+  return `${location.origin}/postularme?empresa=${encodeURIComponent(empresaId)}`;
+}
+
 export function renderLinkPublico(container) {
-  const link = `${location.origin}/postularme`;
+  const link = linkPublicoPostulacion();
   container.innerHTML = `
     <div class="card" style="max-width:720px">
       <h3>Link público de postulación</h3>
@@ -482,12 +518,12 @@ export function renderLinkPublico(container) {
         <input type="text" readonly value="${esc(link)}" style="flex:1;font-family:Consolas,monospace" />
         <button class="btn" onclick="copiarLinkPostulacion()">Copiar</button>
       </div>
-      <p class="muted">El formulario se sirve desde <code>postularme.html</code> (build multipágina). Requiere política RLS de inserción anónima en <code>candidatos</code>.</p>
+      <p class="muted">Usá siempre este link (con el <code>?empresa=</code> incluido) para compartirlo — sin eso, las postulaciones no se van a ver.</p>
     </div>`;
 }
 
 export function copiarLinkPostulacion() {
-  const link = `${location.origin}/postularme`;
+  const link = linkPublicoPostulacion();
   navigator.clipboard?.writeText(link)
     .then(() => showToast('Link copiado', 'ok'))
     .catch(() => showToast('No se pudo copiar', 'err'));
@@ -589,7 +625,10 @@ export function abrirMensajeEntrevista(id) {
   const nombre = c.nombre || '';
   const fecha = c.fechaCita || '';
   const hora = c.horaCita || '';
-  const linkAgendar = `${location.origin}/agendar-entrevista?dni=${encodeURIComponent(c.dni || '')}&nombre=${encodeURIComponent(c.nombre || '')}`;
+  // La empresa del candidato viaja en el link (igual que en el de postulación):
+  // sin eso, lo que complete en /agendar-entrevista tampoco se va a ver.
+  const empresaId = c.empresaId || getCurrentUser()?.empresaId || '';
+  const linkAgendar = `${location.origin}/agendar-entrevista?dni=${encodeURIComponent(c.dni || '')}&nombre=${encodeURIComponent(c.nombre || '')}&empresa=${encodeURIComponent(empresaId)}`;
   const templates = [
     `Hola ${nombre}, te contactamos de [empresa]. ¿Podrías confirmarnos tu disponibilidad para una entrevista presencial? ¿Qué día y horario te viene mejor?`,
     `Hola ${nombre}, quedamos en coordinar una entrevista. Te paso el link para que completes tus datos: ${linkAgendar}`,

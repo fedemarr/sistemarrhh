@@ -4,7 +4,7 @@ export * from './candidatos.js';
 export * from './calendario.js';
 export * from './importadorHistorico.js';
 
-import { tabCandPrincipal, renderCandidatos, filtrarCandidatos, toggleVerCandidatos, abrirNuevoCandidato, editarCandidatoPorId, abrirCitarPorId, guardarCita, registrarAsistencia, abrirResultadoPorId, guardarResultadoEntrevista, onChangeResultadoCand, aprobarCandidatoPorId, rechazarCandidatoPorId, pasarAPsicoPorId, abrirDetalleCandidatoPorId, abrirBajaCandidatoPorId, confirmarBajaCandidato, copiarLinkPostulacion, renderLinkPublico } from './candidatos.js';
+import { tabCandPrincipal, renderCandidatos, filtrarCandidatos, toggleVerCandidatos, abrirNuevoCandidato, editarCandidatoPorId, abrirCitarPorId, guardarCita, abrirAsistenciaPorId, registrarAsistenciaPorId, abrirResultadoPorId, guardarResultadoEntrevista, onChangeResultadoCand, aprobarCandidatoPorId, rechazarCandidatoPorId, pasarAPsicoPorId, abrirDetalleCandidatoPorId, abrirBajaCandidatoPorId, confirmarBajaCandidato, copiarLinkPostulacion, renderLinkPublico, renderPrecandidatos, aprobarPrecandidato, rechazarPrecandidato, abrirMensajeEntrevista, seleccionarPlantillaEntrevista, copiarMensajeEntrevista, abrirWhatsAppEntrevista } from './candidatos.js';
 import { renderCalendario, cambiarSemana, irHoy, agendarTurno, agendarTurnoLibre, verTurno, confirmarCalTurno, eliminarCalTurno, vincularCandidatoTurno } from './calendario.js';
 import { renderImportadorHistorico, descargarPlantillaHistorico, confirmarImportHistorico } from './importadorHistorico.js';
 
@@ -25,7 +25,8 @@ window.abrirNuevoCandidato = abrirNuevoCandidato;
 window.editarCandidatoPorId = editarCandidatoPorId;
 window.abrirCitarPorId = abrirCitarPorId;
 window.guardarCita = guardarCita;
-window.registrarAsistencia = registrarAsistencia;
+window.abrirAsistenciaPorId = abrirAsistenciaPorId;
+window.registrarAsistenciaPorId = registrarAsistenciaPorId;
 window.abrirResultadoPorId = abrirResultadoPorId;
 window.guardarResultadoEntrevista = guardarResultadoEntrevista;
 window.onChangeResultadoCand = onChangeResultadoCand;
@@ -37,6 +38,13 @@ window.abrirBajaCandidatoPorId = abrirBajaCandidatoPorId;
 window.confirmarBajaCandidato = confirmarBajaCandidato;
 window.copiarLinkPostulacion = copiarLinkPostulacion;
 window.renderLinkPublico = renderLinkPublico;
+window.renderPrecandidatos = renderPrecandidatos;
+window.aprobarPrecandidato = aprobarPrecandidato;
+window.rechazarPrecandidato = rechazarPrecandidato;
+window.abrirMensajeEntrevista = abrirMensajeEntrevista;
+window.seleccionarPlantillaEntrevista = seleccionarPlantillaEntrevista;
+window.copiarMensajeEntrevista = copiarMensajeEntrevista;
+window.abrirWhatsAppEntrevista = abrirWhatsAppEntrevista;
 
 window.renderCalendario = renderCalendario;
 window.cambiarSemana = cambiarSemana;

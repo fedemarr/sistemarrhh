@@ -1,5 +1,8 @@
 // Postularme — formulario público dinámico que inserta en candidatos (política RLS de inserción anónima).
 // Los campos se cargan desde config_form_postulacion (Supabase) y caen a defaults si no hay config.
+// Requiere ?empresa=<id> en la URL: sin eso el candidato queda sin empresa_id y
+// las políticas de RLS lo hacen invisible para cualquier usuario de esa empresa.
+// El link correcto se genera en Candidatos → Link de postulación (linkPublicoPostulacion()).
 
 import { getPublicClient, hayConfigSupabase, _toSnakeRow } from './shared/supabase.js';
 
@@ -39,17 +42,21 @@ function renderCampo(c) {
   return `<div class="field"><label for="${id}">${esc(c.label)}${reqLabel}</label><input type="${esc(c.type || 'text')}" name="${esc(c.key)}" id="${id}"${req} /></div>`;
 }
 
+function getUrlParam(name) {
+  return new URLSearchParams(window.location.search).get(name) || '';
+}
+
 function mostrarEstado(ok, msg) {
   const err = $('postular-err');
   err.textContent = msg;
   err.style.color = ok ? '#167c3f' : '#b00020';
 }
 
-async function cargarConfig() {
-  if (!hayConfigSupabase()) return null;
+async function cargarConfig(empresaId) {
+  if (!hayConfigSupabase() || !empresaId) return null;
   try {
     const client = getPublicClient();
-    const { data, error } = await client.from('config_form_postulacion').select('*').limit(1);
+    const { data, error } = await client.from('config_form_postulacion').select('*').eq('empresa_id', empresaId).limit(1);
     if (error || !data || !data.length) return null;
     const row = data[0];
     let campos = row.campos;
@@ -63,7 +70,7 @@ async function cargarConfig() {
   }
 }
 
-async function enviar() {
+async function enviar(empresaId) {
   const form = $('form-postular');
   if (!form) return;
   const f = form.elements;
@@ -83,6 +90,7 @@ async function enviar() {
 
     const candidato = {
       id: Date.now().toString(),
+      empresaId,
       nombre,
       apellido,
       dni,
@@ -113,7 +121,7 @@ async function enviar() {
   }
 }
 
-function renderForm(campos, speech) {
+function renderForm(campos, speech, empresaId) {
   const cont = $('screen-postular');
   const sorted = [...campos].sort((a, b) => (a.order || 0) - (b.order || 0));
   cont.innerHTML = `
@@ -131,13 +139,26 @@ function renderForm(campos, speech) {
       </form>
       <p class="muted" style="text-align:center;margin-top:12px"><a href="/">← Volver al inicio</a></p>
     </div>`;
-  $('form-postular').addEventListener('submit', (ev) => { ev.preventDefault(); enviar(); });
+  $('form-postular').addEventListener('submit', (ev) => { ev.preventDefault(); enviar(empresaId); });
+}
+
+function renderSinEmpresa() {
+  const cont = $('screen-postular');
+  cont.innerHTML = `
+    <div class="login-card" style="max-width:720px">
+      <div class="logo">G</div>
+      <h1>Postulación laboral</h1>
+      <p class="sub" style="color:#b00020">Este link no es válido: falta identificar la empresa. Pedile a la empresa el link correcto (lo encuentran en Candidatos → Link de postulación).</p>
+    </div>`;
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-  const config = await cargarConfig();
+  const empresaId = getUrlParam('empresa');
+  if (!empresaId) { renderSinEmpresa(); return; }
+  const config = await cargarConfig(empresaId);
   renderForm(
     config?.campos || DEFAULT_CAMPOS,
-    config?.speech || ''
+    config?.speech || '',
+    empresaId
   );
 });

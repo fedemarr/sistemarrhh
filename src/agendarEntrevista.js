@@ -46,7 +46,7 @@ function renderCampo(c, defaults) {
   return `<div class="field"><label for="${id}">${esc(c.label)}${reqLabel}</label><input type="${esc(c.type || 'text')}" name="${esc(c.key)}" id="${id}" value="${esc(val)}"${req} /></div>`;
 }
 
-function renderForm(campos, instrucciones, defaults) {
+function renderForm(campos, instrucciones, defaults, empresaId) {
   const cont = $('agendar-form-container');
   const sorted = [...campos].sort((a, b) => (a.order || 0) - (b.order || 0));
   cont.innerHTML = `
@@ -58,10 +58,10 @@ function renderForm(campos, instrucciones, defaults) {
       </div>
       <button type="submit" class="btn">Enviar datos</button>
     </form>`;
-  $('form-agendar').addEventListener('submit', (ev) => { ev.preventDefault(); enviar(campos); });
+  $('form-agendar').addEventListener('submit', (ev) => { ev.preventDefault(); enviar(campos, empresaId); });
 }
 
-async function enviar(campos) {
+async function enviar(campos, empresaId) {
   const form = $('form-agendar');
   if (!form) return;
   const btn = form.querySelector('button[type=submit]');
@@ -79,6 +79,7 @@ async function enviar(campos) {
   try {
     const candidato = {
       id: Date.now().toString(),
+      empresaId,
       nombre,
       apellido,
       dni,
@@ -102,11 +103,11 @@ async function enviar(campos) {
   }
 }
 
-async function cargarConfig() {
-  if (!hayConfigSupabase()) return null;
+async function cargarConfig(empresaId) {
+  if (!hayConfigSupabase() || !empresaId) return null;
   try {
     const client = getPublicClient();
-    const { data, error } = await client.from('config_form_entrevista').select('*').limit(1);
+    const { data, error } = await client.from('config_form_entrevista').select('*').eq('empresa_id', empresaId).limit(1);
     if (error || !data || !data.length) return null;
     const row = data[0];
     let campos = row.campos;
@@ -125,16 +126,22 @@ window.addEventListener('DOMContentLoaded', async () => {
     mostrarEstado(false, 'El sistema todavía no está configurado (falta Supabase).');
     return;
   }
+  const empresaId = getUrlParam('empresa');
+  if (!empresaId) {
+    mostrarEstado(false, 'Este link no es válido: falta identificar la empresa. Pedile a la empresa que te reenvíe el link.');
+    return;
+  }
   const defaults = {};
   const dni = getUrlParam('dni');
   const nombre = getUrlParam('nombre');
   if (dni) defaults.dni = dni;
   if (nombre) defaults.nombre = nombre;
 
-  const config = await cargarConfig();
+  const config = await cargarConfig(empresaId);
   renderForm(
     config?.campos || DEFAULT_CAMPOS,
     config?.instrucciones || '',
-    defaults
+    defaults,
+    empresaId
   );
 });
