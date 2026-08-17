@@ -28,11 +28,11 @@ const CREDENCIALES_DEMO = [
 ];
 
 export function mostrarLogin() {
-  const login = document.getElementById('screen-login');
+  const screenLogin = document.getElementById('screen-login');
   const layout = document.getElementById('layout');
-  login.classList.remove('hidden');
+  screenLogin.classList.remove('hidden');
   layout.classList.add('hidden');
-  login.innerHTML = `
+  screenLogin.innerHTML = `
     <div class="login-card">
       <div class="logo">R</div>
       <h1>${esc(APP.nombre)}</h1>
@@ -77,10 +77,10 @@ export function mostrarLogin() {
 }
 
 export async function entrarAlSistema() {
-  const login = document.getElementById('screen-login');
+  const screenLogin = document.getElementById('screen-login');
   const layout = document.getElementById('layout');
   const cfg = document.getElementById('screen-config');
-  login.classList.add('hidden');
+  screenLogin.classList.add('hidden');
   cfg.classList.add('hidden');
   layout.classList.remove('hidden');
   await supaInit();
