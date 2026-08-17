@@ -7,6 +7,8 @@ import { ensureModal, cerrarModal, showToast } from '../../shared/modal.js';
 import { esc, hoyISO, esCbuValido, formatMoney, maxP1 } from '../../shared/helpers.js';
 import { calcularFechaAltaObraSocialISO } from '../../shared/obraSocial.js';
 import { getCurrentUser } from '../../shared/auth.js';
+import { subirAdjunto, htmlAdjuntos } from '../../shared/adjuntos.js';
+import { CATEGORIAS_MONO } from '../liquidacion/monotributos.js';
 
 export const ALTA_TABS = 8;
 
@@ -228,6 +230,9 @@ function leerTab(id) {
   if (id === 6) {
     a.cuentaBancaria = { banco: vl('alta-banco'), cbu: vl('alta-cbu') };
   }
+  if (id === 7) {
+    a.constanciaMT = { categoria: vl('alta-mt-categoria'), vencimiento: vl('alta-mt-vencimiento') };
+  }
 }
 
 function vl(id) {
@@ -240,7 +245,7 @@ export function tabAlta(idx) {
   const a = _altaActual;
   if (!a) return;
   const tabsHtml = [];
-  const nombres = ['Identificación', 'Domicilio', 'Operativo', 'Uniforme', 'Capital', 'Seguros', 'Cuentas bancarias', 'Resumen'];
+  const nombres = ['Identificación', 'Domicilio', 'Operativo', 'Uniforme', 'Capital', 'Seguros', 'Cuentas bancarias', 'Constancia MT'];
   for (let i = 0; i < ALTA_TABS; i++) {
     tabsHtml.push(`<button type="button" class="wizard-tab ${i === idx ? 'active' : ''}" onclick="tabAlta(${i})">${nombres[i]}</button>`);
   }
@@ -345,18 +350,20 @@ export function tabAlta(idx) {
       </div>
       <div class="alert alert-warn">El CBU debe tener exactamente 22 dígitos. Si no está cargado, NO bloquea el alta (solo avisa).</div>`;
   } else if (idx === 7) {
-    const ident2 = a.identificacion || {};
-    const op2 = a.operativo || {};
-    const cap2 = a.capital || {};
+    const mt = a.constanciaMT || {};
     panel.innerHTML = `
-      <h3>Resumen del alta</h3>
-      <div class="grupo"><legend>Identificación</legend><p>${esc(ident2.nombre || a.nombre || '')} · DNI ${esc(ident2.dni || a.dni || '')} · CUIT ${esc(ident2.cuit || '—')} · ${esc(ident2.tel || '—')}</p></div>
-      <div class="grupo"><legend>Operativo</legend><p>${esc(op2.funcion || '')} · ${esc(op2.servicio || '')} · Sup: ${esc(op2.supervisor || '—')} · Prueba: ${esc(String(op2.periodoPrueba || 6))} meses</p></div>
-      <div class="grupo"><legend>Capital y seguros</legend>
-        <p>Integración: ${esc(String(cap2.integracion ?? ''))} · ${esc((a.seguros?.obraSocial) || '—')} · Inicio OS: ${esc((a.seguros?.obraSocialInicioTramite) || '—')}</p>
-        <p>Pólizas: ${(a._polizas || []).filter((p) => p.numero).map((p) => `${esc(p.numero)} ${esc(p.compania)}`).join(' · ') || '—'}</p>
+      <h3>Constancia de Monotributo</h3>
+      <div class="form-grid">
+        <div class="field"><label>Categoría *</label>
+          <select id="alta-mt-categoria">${CATEGORIAS_MONO.map((c) => `<option ${mt.categoria === c ? 'selected' : ''}>${c}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Vencimiento de la constancia</label><input type="date" id="alta-mt-vencimiento" value="${esc(mt.vencimiento || '')}" /></div>
       </div>
-      <div class="grupo"><legend>Cuenta bancaria</legend><p>${esc((a.cuentaBancaria?.banco) || '—')} · CBU ${esc((a.cuentaBancaria?.cbu) || '—')}</p></div>
+      <div class="adjunto-box altas">
+        <h4>🧾 Constancia de Monotributo (AFIP/ARCA)</h4>
+        ${htmlAdjuntos('altas', 'constanciaMT', a.id)}
+        <div class="field"><input type="file" id="alta-mt-archivo" accept=".pdf,.jpg,.png" /></div>
+      </div>
       <div class="alert alert-ok">Al confirmar se creará el legajo con el próximo n° de socio (máximo actual + 1) y se generará el borrador del kit de uniforme.</div>`;
   }
 }
@@ -466,12 +473,15 @@ export function confirmarAlta(id) {
   const a = getAltById(id);
   if (!a) return;
 
-  // Asegurar lectura de todos los tabs
-  for (let i = 0; i < ALTA_TABS; i++) {
-    if (i !== _tabAltaIdx) { _tabAltaIdx = i; leerTab(i); }
-  }
-  _tabAltaIdx = 0;
-  leerTab(0);
+  // Solo hace falta releer el tab que está visible ahora mismo: los demás
+  // ya quedaron guardados en 'a' al navegar (tabAltaSiguiente/Anterior
+  // llaman leerTab() antes de cambiar de tab). Antes acá se releían TODOS
+  // los tabs sin cambiar el panel visible, así que para cualquier tab que
+  // no fuera el actual, leerTab() leía inputs inexistentes en el DOM y
+  // pisaba con blanco identificacion/domicilio/operativo/etc. -> la
+  // validación de abajo (nombre/DNI/función/integración) fallaba siempre,
+  // en cualquier intento de confirmar un alta.
+  leerTab(_tabAltaIdx);
   leerPolizas();
   a.polizas = a._polizas;
 
@@ -559,6 +569,8 @@ export function confirmarAlta(id) {
     integracion: Number(cap.integracion) || 0,
     polizas: a.polizas || [],
     cuit: ident.cuit,
+    categoriaMonotributo: (a.constanciaMT || {}).categoria || '',
+    constanciaMtVencimiento: (a.constanciaMT || {}).vencimiento || '',
   };
   DB.legajos.push(legajo);
 
@@ -583,6 +595,7 @@ export function confirmarAlta(id) {
     capital: cap,
     seguros: seg,
     cuentaBancaria: cue,
+    constanciaMT: a.constanciaMT || {},
   };
   tareas.push(supaSync('catAltPendientes', a));
 
@@ -592,7 +605,9 @@ export function confirmarAlta(id) {
   }
 
   Promise.all(tareas)
-    .then(() => {
+    .then(async () => {
+      const fMt = document.getElementById('alta-mt-archivo')?.files?.[0];
+      if (fMt) await subirAdjunto({ etapa: 'altas', tipo: 'constanciaMT', refIdLocal: a.id, file: fMt }).catch((e) => showToast(e.message, 'err'));
       showToast(`Alta completada — asociado N° ${nro}${cbuMsg}`, 'ok');
       cerrarModal('modal-alta');
       // El legajo ya se creó arriba (DB.legajos.push) — va directo a Legajos

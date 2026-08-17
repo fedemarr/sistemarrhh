@@ -106,6 +106,7 @@ create table if not exists public.legajos (
   periodo_prueba text, fecha_ingreso_prueba text, categoria text,
   obra_social text, obra_social_inicio_tramite text, forma_pago text,
   integracion numeric, polizas text, motivo_baja text,
+  categoria_monotributo text, constancia_mt_vencimiento text,
   created_at timestamptz default now(), updated_at timestamptz default now()
 );
 

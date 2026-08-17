@@ -184,6 +184,7 @@ table.tbl { width: 100%; border-collapse: collapse; background: #fff; font-size:
 .adjunto-box.psico { background: var(--morado-claro); border-color: var(--morado-borde); }
 .adjunto-box.preocup { background: var(--teal-claro); border-color: var(--teal-borde); }
 .adjunto-box.documentacion { background: var(--indigo-claro); border-color: var(--indigo-borde); }
+.adjunto-box.altas { background: var(--verde-claro); border-color: #a8dcc0; }
 
 /* Tabs tipo "pill" para wizards (Alta de asociado). */
 .wizard-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
