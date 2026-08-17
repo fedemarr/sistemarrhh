@@ -66,7 +66,7 @@ export function construirMenu() {
     { label: 'Liquidación', keys: ['categorias', 'smvm', 'liquidacion_horas', 'liq_admin', 'mantenimiento', 'retenes', 'liquidaciones', 'monotributos', 'retenciones', 'descuentos', 'paritarias', 'feriados'] },
     { label: 'Adelantos', keys: ['pedidos_adelantos', 'gestion_adelantos', 'mis_adelantos'] },
     { label: 'Transversales', keys: ['sugerencias', 'comunicaciones'] },
-    ...(u?.esSuperadmin ? [{ label: 'Administración', keys: ['empresas'] }] : []),
+    ...(u?.esSuperadmin ? [{ label: 'Administración', keys: ['empresas', 'dashboard_empresas', 'auditorias'] }] : []),
     ...((u?.esSuperadmin || u?.perfil === 'RRHH') ? [{ label: 'Configuración', keys: ['config_form_postulacion', 'config_form_entrevista'] }] : []),
   ];
 

@@ -3,7 +3,8 @@
 // Multitenant: cada usuario pertenece a una empresa (empresa_id).
 
 import { getClient } from './supabase.js';
-import { PERFILES, SESSION } from '../state.js';
+import { PERFILES, SESSION, DB } from '../state.js';
+import { supaSync } from './supabase.js';
 
 export function getCurrentUser() {
   return SESSION.currentUser;
@@ -39,7 +40,18 @@ export function login({ email, password }) {
     return client.from('usuarios').select('*').eq('id', user.id).maybeSingle().then(({ data: fila, error: err2 }) => {
       if (err2) throw new Error('Error consultando el perfil del usuario: ' + err2.message);
       if (!fila) throw new Error('El usuario no tiene perfil asignado en la tabla usuarios.');
-      return setCurrentUser(usuarioDesdeFila(user.id, fila));
+      const u = setCurrentUser(usuarioDesdeFila(user.id, fila));
+      const logEntry = {
+        id: Date.now().toString(),
+        accion: 'login',
+        usuario: u.nombre,
+        email: u.email,
+        empresaId: u.empresaId,
+        fecha: new Date().toISOString(),
+      };
+      DB.logs.push(logEntry);
+      supaSync('logs', logEntry).catch(() => {});
+      return u;
     });
   });
 }
@@ -69,6 +81,19 @@ export async function restaurarDesdeSesion() {
 
 export async function logout() {
   const client = getClient();
+  const u = getCurrentUser();
+  if (u) {
+    const logEntry = {
+      id: Date.now().toString(),
+      accion: 'logout',
+      usuario: u.nombre,
+      email: u.email,
+      empresaId: u.empresaId,
+      fecha: new Date().toISOString(),
+    };
+    DB.logs.push(logEntry);
+    supaSync('logs', logEntry).catch(() => {});
+  }
   await client.auth.signOut().catch(() => {});
   SESSION.currentUser = null;
 }

@@ -20,6 +20,8 @@ import { sugerenciasScreenConfig } from './sugerencias/index.js';
 import { liquidacionScreenConfig } from './liquidacion/index.js';
 import { adelantosScreenConfig } from './adelantos/index.js';
 import { empresasScreenConfig } from './empresas/index.js';
+import { dashboardEmpresasScreenConfig } from './dashboard_empresas/index.js';
+import { auditoriasScreenConfig } from './auditorias/index.js';
 import { configFormsScreenConfig } from './config_forms/index.js';
 import { comunicacionesScreenConfig } from './comunicaciones/index.js';
 
@@ -44,6 +46,8 @@ export const moduleScreenConfigs = [
   liquidacionScreenConfig,
   adelantosScreenConfig,
   empresasScreenConfig,
+  dashboardEmpresasScreenConfig,
+  auditoriasScreenConfig,
   configFormsScreenConfig,
   comunicacionesScreenConfig,
 ];
