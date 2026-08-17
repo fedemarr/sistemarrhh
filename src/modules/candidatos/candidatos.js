@@ -51,7 +51,11 @@ export function renderCandidatos() {
   const fZona = document.getElementById('cand-filtro-zona')?.value || '';
   const fEstado = document.getElementById('cand-filtro-estado')?.value || '';
 
-  const lista = (DB.candidatos || []).filter((c) => {
+  // Los "Precandidato" viven solo en la pestaña Pre-candidatos hasta que se
+  // aprueban (pasan a "Sin citar") o se rechazan: acá no se muestran.
+  const base = (DB.candidatos || []).filter((c) => c.estado !== 'Precandidato');
+
+  const lista = base.filter((c) => {
     const activos = ver === 'activos' ? !esHistoricoCand(c) : esHistoricoCand(c);
     const matchB = !buscar || [c.apellido, c.nombre, c.dni, c.telefono].some((v) => String(v || '').toLowerCase().includes(buscar.toLowerCase()));
     const matchZ = !fZona || c.zona === fZona;
@@ -61,16 +65,16 @@ export function renderCandidatos() {
 
   cont.innerHTML = `
     <div class="toolbar">
-      <button class="btn btn-secondary ${ver === 'activos' ? '' : ''}" onclick="toggleVerCandidatos('activos')">Activos (${(DB.candidatos || []).filter((c) => !esHistoricoCand(c)).length})</button>
-      <button class="btn btn-secondary" onclick="toggleVerCandidatos('historico')">Histórico (${(DB.candidatos || []).filter((c) => esHistoricoCand(c)).length})</button>
+      <button class="btn btn-secondary ${ver === 'activos' ? '' : ''}" onclick="toggleVerCandidatos('activos')">Activos (${base.filter((c) => !esHistoricoCand(c)).length})</button>
+      <button class="btn btn-secondary" onclick="toggleVerCandidatos('historico')">Histórico (${base.filter((c) => esHistoricoCand(c)).length})</button>
       <input type="text" id="cand-buscar" placeholder="Buscar apellido / DNI…" value="${esc(buscar)}" oninput="renderCandidatos()" />
       <select id="cand-filtro-zona" onchange="renderCandidatos()">
         <option value="">Zona: todas</option>
-        ${[...new Set((DB.candidatos || []).map((c) => c.zona).filter(Boolean))].map((z) => `<option ${fZona === z ? 'selected' : ''}>${esc(z)}</option>`).join('')}
+        ${[...new Set(base.map((c) => c.zona).filter(Boolean))].map((z) => `<option ${fZona === z ? 'selected' : ''}>${esc(z)}</option>`).join('')}
       </select>
       <select id="cand-filtro-estado" onchange="renderCandidatos()">
         <option value="">Estado: todos</option>
-        ${ESTADOS_ACTIVOS_CAND.concat(ESTADOS_HISTORICO_CAND).map((e) => `<option ${fEstado === e ? 'selected' : ''}>${e}</option>`).join('')}
+        ${ESTADOS_ACTIVOS_CAND.filter((e) => e !== 'Precandidato').concat(ESTADOS_HISTORICO_CAND).map((e) => `<option ${fEstado === e ? 'selected' : ''}>${e}</option>`).join('')}
       </select>
     </div>
     <div class="tbl-wrap">

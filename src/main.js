@@ -130,6 +130,7 @@ export function screenInicio() {
   const u = getCurrentUser();
   const notis = notificacionesPara(u?.nombre).slice(0, 6);
   const totales = {
+    precandidatos: (DB.candidatos || []).filter((c) => c.estado === 'Precandidato').length,
     pendientes: (DB.candidatos || []).filter((c) => c.estado === 'Sin citar' || c.estado === 'Citado').length,
     altas: (DB.catAltPendientes || []).filter((c) => c.estado === 'Pendiente de alta').length,
     legajosActivos: (DB.legajos || []).filter((l) => l.estado === 'Activo').length,
@@ -138,6 +139,7 @@ export function screenInicio() {
   };
   return `
     <div class="stats">
+      <div class="stat"><div class="num">${totales.precandidatos}</div><div class="lbl">Pre-candidatos sin revisar</div></div>
       <div class="stat"><div class="num">${totales.pendientes}</div><div class="lbl">Candidatos por gestionar</div></div>
       <div class="stat"><div class="num">${totales.altas}</div><div class="lbl">Altas pendientes</div></div>
       <div class="stat"><div class="num">${totales.legajosActivos}</div><div class="lbl">Asociados activos</div></div>
