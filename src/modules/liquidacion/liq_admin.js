@@ -13,7 +13,8 @@ export function getLiqAdminById(id) {
 }
 
 export function renderLiqAdminInicial() {
-  const cont = document.getElementById('screen-liq-admin');
+  const cont = document.getElementById('screen-liq_admin');
+  if (!cont) return;
   cont.innerHTML = `
     <div class="toolbar">
       <input type="text" id="buscar-liq-admin" placeholder="Buscar…" oninput="filtrarLiqAdmin()" />

@@ -35,14 +35,20 @@ export function _crearAltaDesdeDocum(d) {
   return true;
 }
 
-export function renderDocum() {
-  const cont = document.getElementById('screen-documentacion');
+function documFiltrados() {
   const ver = document.getElementById('docum-ver')?.value || 'activos';
   const buscar = document.getElementById('docum-buscar')?.value || '';
-
-  const lista = (DB.documentacionIngreso || [])
+  return (DB.documentacionIngreso || [])
     .filter((d) => (ver === 'activos' ? !d.anulado && d.estado !== 'Rechazado' : d.anulado || d.estado === 'Rechazado'))
     .filter((d) => !buscar || String(d.nombre || '').toLowerCase().includes(buscar.toLowerCase()) || String(d.dni).includes(buscar));
+}
+
+export function renderDocum() {
+  const cont = document.getElementById('screen-documentacion');
+  if (!cont) return;
+  const buscar = document.getElementById('docum-buscar')?.value || '';
+
+  const lista = documFiltrados();
 
   const stats = {
     total: (DB.documentacionIngreso || []).length,

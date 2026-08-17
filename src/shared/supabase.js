@@ -182,20 +182,25 @@ export function _toCamelRow(row) {
   return out;
 }
 
-// === Carga inicial: todas las tablas → objeto DB ===
+// === Carga inicial: todas las tablas → objeto DB (en paralelo) ===
 export async function supaInit() {
   const client = getClient();
-  for (const [key, table] of Object.entries(_SM)) {
-    try {
-      const { data, error } = await client.from(table).select('*');
-      if (error) {
-        console.warn(`supaInit: tabla ${table} → ${error.message}`);
-        continue;
+  const BATCH = 20;
+  const entries = Object.entries(_SM);
+  for (let i = 0; i < entries.length; i += BATCH) {
+    const batch = entries.slice(i, i + BATCH);
+    await Promise.all(batch.map(async ([key, table]) => {
+      try {
+        const { data, error } = await client.from(table).select('*');
+        if (error) {
+          console.warn(`supaInit: tabla ${table} → ${error.message}`);
+          return;
+        }
+        DB[key] = (data || []).map(_toCamelRow);
+      } catch (e) {
+        console.warn(`supaInit: tabla ${table} → ${e.message}`);
       }
-      DB[key] = (data || []).map(_toCamelRow);
-    } catch (e) {
-      console.warn(`supaInit: tabla ${table} → ${e.message}`);
-    }
+    }));
   }
   return DB;
 }

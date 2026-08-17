@@ -35,14 +35,20 @@ export function puedeVerMedico() { return esRol('Administrador total', 'RRHH', '
 export function puedeVerCC() { return esRol('Administrador total', 'RRHH', 'Finanzas'); }
 export function puedeVerClaveFiscal() { return esRol('Administrador total', 'RRHH'); }
 
-export function renderLegajos() {
-  const cont = document.getElementById('screen-legajos');
+function legajosFiltrados() {
   const buscar = document.getElementById('leg-buscar')?.value || '';
   const fEstado = document.getElementById('leg-filtro-estado')?.value || '';
-  const lista = (DB.legajos || [])
+  return (DB.legajos || [])
     .filter((l) => !fEstado || l.estado === fEstado)
     .filter((l) => !buscar || [l.nombre, l.dni, String(l.nro), l.servicio].some((v) => String(v || '').toLowerCase().includes(buscar.toLowerCase())))
     .sort((a, b) => Number(a.nro) - Number(b.nro));
+}
+
+export function renderLegajos() {
+  const cont = document.getElementById('screen-legajos');
+  if (!cont) return;
+  const buscar = document.getElementById('leg-buscar')?.value || '';
+  const lista = legajosFiltrados();
 
   cont.innerHTML = `
     <div class="toolbar">

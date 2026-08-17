@@ -10,7 +10,8 @@ import { adelantosDeSocio, totalDeuda, cuotaMensual, getAdelantoById } from './a
 import { motivosAdelanto } from './adelantosShared.js';
 
 export function renderMisAdelantos() {
-  const cont = document.getElementById('screen-mis-adelantos');
+  const cont = document.getElementById('screen-mis_adelantos');
+  if (!cont) return;
   const u = getCurrentUser();
   const nro = u?.nroSocio || u?.usuario || '';
   const lista = adelantosDeSocio(nro);

@@ -10,7 +10,8 @@ import { crearNotificacion } from '../../shared/notificaciones.js';
 import { getAdelantoById, puedeAprobarSup, puedeAprobarFin, cuotaMensual } from './adelantosShared.js';
 
 export function renderGestionAdelantos(tab = 'pendientes') {
-  const cont = document.getElementById('screen-gestion-adelantos');
+  const cont = document.getElementById('screen-gestion_adelantos');
+  if (!cont) return;
   const u = getCurrentUser();
   const pendientesSup = (DB.adelantos || []).filter((a) => a.estado === 'Enviado');
   const enProceso = (DB.adelantos || []).filter((a) => a.estado === 'En proceso');

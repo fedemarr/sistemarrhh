@@ -19,14 +19,20 @@ export function getPreocupById(id) {
   return (DB.preocupacionales || []).find((p) => String(p.id) === String(id));
 }
 
-export function renderPreocup() {
-  const cont = document.getElementById('screen-preocupacional');
+function preocupFiltrados() {
   const ver = document.getElementById('preocup-ver')?.value || 'activos';
   const buscar = document.getElementById('preocup-buscar')?.value || '';
-
-  const lista = (DB.preocupacionales || [])
+  return (DB.preocupacionales || [])
     .filter((p) => (ver === 'activos' ? p.estado !== 'Rechazado' && !p.anulado : p.estado === 'Rechazado' || p.anulado))
     .filter((p) => !buscar || String(p.nombre || '').toLowerCase().includes(buscar.toLowerCase()) || String(p.dni).includes(buscar));
+}
+
+export function renderPreocup() {
+  const cont = document.getElementById('screen-preocupacional');
+  if (!cont) return;
+  const buscar = document.getElementById('preocup-buscar')?.value || '';
+
+  const lista = preocupFiltrados();
 
   const stats = {
     total: (DB.preocupacionales || []).length,

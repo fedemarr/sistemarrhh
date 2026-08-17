@@ -29,15 +29,29 @@ export function pedidosVisiblesParaUsuario() {
   return [];
 }
 
+let _filtro = '';
+let _filtroEstado = '';
+function filtroPedidosActual() { return _filtro; }
+
+function pedidosFiltrados() {
+  const t = _filtro.toLowerCase();
+  return pedidosVisiblesParaUsuario().filter((p) => {
+    const matchTxt = !t || [p.servicio, p.zona, p.supervisor, p.puesto, p.detalle].some((v) => String(v || '').toLowerCase().includes(t));
+    const matchEst = !_filtroEstado || p.estado === _filtroEstado;
+    return matchTxt && matchEst;
+  });
+}
+
 export function renderPedidos() {
   const container = document.getElementById('screen-pedidos');
-  const lista = filtrarPedidos(filtroPedidosActual());
+  if (!container) return;
+  const lista = pedidosFiltrados();
   container.innerHTML = `
     <div class="toolbar">
       <input type="text" id="ped-filtro" placeholder="Buscar por servicio / zona / supervisor…" oninput="filtrarPedidos(event.target.value)" />
       <select id="ped-filtro-estado" onchange="filtrarPedidos('__estado__')">
         <option value="">Todos los estados</option>
-        ${ESTADOS_PEDIDO.map((e) => `<option>${e}</option>`).join('')}
+        ${ESTADOS_PEDIDO.map((e) => `<option${e === _filtroEstado ? ' selected' : ''}>${e}</option>`).join('')}
       </select>
       <div class="spacer"></div>
     </div>
@@ -51,24 +65,13 @@ export function renderPedidos() {
     </div>`;
 }
 
-let _filtro = '';
-let _filtroEstado = '';
-function filtroPedidosActual() { return _filtro; }
-
 export function filtrarPedidos(term) {
   if (term === '__estado__') {
     _filtroEstado = document.getElementById('ped-filtro-estado')?.value || '';
   } else if (typeof term === 'string') {
     _filtro = term;
   }
-  const t = _filtro.toLowerCase();
-  const lista = pedidosVisiblesParaUsuario().filter((p) => {
-    const matchTxt = !t || [p.servicio, p.zona, p.supervisor, p.puesto, p.detalle].some((v) => String(v || '').toLowerCase().includes(t));
-    const matchEst = !_filtroEstado || p.estado === _filtroEstado;
-    return matchTxt && matchEst;
-  });
   renderPedidos();
-  return lista;
 }
 
 function chipEstado(e) {

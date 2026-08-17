@@ -9,7 +9,8 @@ import { getCurrentUser, esRol } from '../../shared/auth.js';
 import { ESTADOS_ADELANTO, MOTIVOS_ADELANTO_DEFAULT, motivosAdelanto, cuotaMensual, puedePedir, getAdelantoById } from './adelantosShared.js';
 
 export function renderPedidosAdelantos() {
-  const cont = document.getElementById('screen-pedidos-adelantos');
+  const cont = document.getElementById('screen-pedidos_adelantos');
+  if (!cont) return;
   const u = getCurrentUser();
   const soloPropios = u && (esRol('Asociado') || (u.nroSocio && !esRol('Administrador total', 'RRHH', 'Finanzas', 'Operaciones', 'Supervisor')));
   const lista = (DB.adelantos || []).filter((a) => !soloPropios || String(a.nroSocio) === String(u?.nroSocio)).sort((a, b) => String(b.fechaPedido).localeCompare(String(a.fechaPedido)));

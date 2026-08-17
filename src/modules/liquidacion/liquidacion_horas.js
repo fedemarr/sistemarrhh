@@ -20,7 +20,8 @@ export function getLiquidacionHorasById(id) {
 }
 
 export function renderLiquidacionHorasInicial(tab = 'borradores') {
-  const cont = document.getElementById('screen-liquidacion-horas');
+  const cont = document.getElementById('screen-liquidacion_horas');
+  if (!cont) return;
   const lista = DB.liquidacionesHoras || [];
   const borradores = lista.filter((l) => l.estado === 'Borrador');
   cont.innerHTML = `
