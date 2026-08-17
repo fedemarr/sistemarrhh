@@ -780,8 +780,11 @@ drop policy if exists "anon_insert_config_postulacion" on public.config_form_pos
 create policy "anon_insert_config_postulacion" on public.config_form_postulacion
   for insert to anon with check (true);
 
--- Config form entrevista: solo autenticados.
+-- Config form entrevista: anon puede leer para el formulario público /agendar-entrevista.
 alter table public.config_form_entrevista enable row level security;
+drop policy if exists "anon_select_config_entrevista" on public.config_form_entrevista;
+create policy "anon_select_config_entrevista" on public.config_form_entrevista
+  for select to anon using (true);
 
 -- Comunicaciones: anon puede insertar (formulario público), autenticados gestionan.
 alter table public.comunicaciones enable row level security;

@@ -1,6 +1,6 @@
 // Agendar entrevista — formulario público que registra candidatos con estado "Citado".
 
-import { getClient, hayConfigSupabase, _toSnakeRow } from './shared/supabase.js';
+import { getPublicClient, hayConfigSupabase, _toSnakeRow } from './shared/supabase.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -88,7 +88,7 @@ async function enviar(campos) {
       fecha: new Date().toISOString(),
       origen: 'agendar-entrevista',
     };
-    const client = getClient();
+    const client = getPublicClient();
     const { error } = await client.from('candidatos').insert([_toSnakeRow(candidato)]);
     if (error) throw new Error(error.message);
     mostrarEstado(true, '¡Datos enviados! Te contactaremos para confirmar la entrevista.');
@@ -104,7 +104,7 @@ async function enviar(campos) {
 async function cargarConfig() {
   if (!hayConfigSupabase()) return null;
   try {
-    const client = getClient();
+    const client = getPublicClient();
     const { data, error } = await client.from('config_form_entrevista').select('*').limit(1);
     if (error || !data || !data.length) return null;
     const row = data[0];

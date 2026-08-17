@@ -29,6 +29,26 @@ export function getClient(override) {
 // Inyección para tests / contexto no-browser.
 export function setClient(c) { _client = c; }
 
+// Cliente para formularios públicos (/postularme, /agendar-entrevista).
+// A propósito NO reusa getClient(): ese cliente persiste la sesión en
+// localStorage, y como estas páginas públicas viven en el mismo origen que
+// el panel logueado, si un empleado las abre en la misma pestaña/navegador
+// donde tiene sesión iniciada, supabase-js reutilizaría su JWT en vez de
+// mandar la request como anónimo -> el insert (sin empresa_id) choca contra
+// la política RLS de tenant y tira "row-level security policy" en vez de
+// guardarse como postulación anónima.
+let _publicClient = null;
+export function getPublicClient() {
+  if (_publicClient) return _publicClient;
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error('Falta configuración de Supabase (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).');
+  }
+  _publicClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  return _publicClient;
+}
+
 // === Mapa clave-JS → tabla Supabase (sección 5.6 + tablas de migración) ===
 export const _SM = {
   legajos: 'legajos',

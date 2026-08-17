@@ -1,7 +1,7 @@
 // Postularme — formulario público dinámico que inserta en candidatos (política RLS de inserción anónima).
 // Los campos se cargan desde config_form_postulacion (Supabase) y caen a defaults si no hay config.
 
-import { getClient, hayConfigSupabase, _toSnakeRow } from './shared/supabase.js';
+import { getPublicClient, hayConfigSupabase, _toSnakeRow } from './shared/supabase.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -47,7 +47,7 @@ function mostrarEstado(ok, msg) {
 async function cargarConfig() {
   if (!hayConfigSupabase()) return null;
   try {
-    const client = getClient();
+    const client = getPublicClient();
     const { data, error } = await client.from('config_form_postulacion').select('*').limit(1);
     if (error || !data || !data.length) return null;
     const row = data[0];
@@ -95,7 +95,7 @@ async function enviar() {
       origen: 'postularme',
     };
 
-    const client = getClient();
+    const client = getPublicClient();
     const { error } = await client.from('candidatos').insert([_toSnakeRow(candidato)]);
     if (error) throw new Error(error.message);
     mostrarEstado(true, '¡Postulación enviada! Te contactaremos a la brevedad.');
@@ -113,7 +113,7 @@ function renderForm(campos, speech) {
   const sorted = [...campos].sort((a, b) => (a.order || 0) - (b.order || 0));
   cont.innerHTML = `
     <div class="login-card" style="max-width:720px">
-      <div class="logo">R</div>
+      <div class="logo">G</div>
       <h1>Postulación laboral</h1>
       ${speech ? `<div class="card" style="margin-bottom:16px;padding:12px"><p>${esc(speech)}</p></div>` : ''}
       <p class="sub">Completá el formulario y tu candidatura queda registrada.</p>
