@@ -107,7 +107,23 @@ export function aprobarAdelantoSup(id) {
   a.historial = a.historial || [];
   a.historial.push({ fecha: new Date().toISOString(), tipo: 'aprobado_supervisor', comentario: '', usuario: a.aprobadoPorSup });
   supaSync('adelantos', a)
-    .then(() => { showToast('Adelanto aprobado por supervisor', 'ok'); notificarCambio(a, `Tu adelanto de $${a.monto} fue aprobado por supervisor.`); renderGestionAdelantos('enproceso'); })
+    .then(() => {
+      showToast('Adelanto aprobado por supervisor', 'ok');
+      notificarCambio(a, `Tu adelanto de $${a.monto} fue aprobado por supervisor.`);
+      DB.comunicaciones.push({
+        id: Date.now().toString(),
+        tipo: 'general',
+        de: 'sistema',
+        para: a.nombreAsociado,
+        mensaje: `Tu pedido de adelanto de $${a.monto} fue APROBADO por supervisor.`,
+        leido: false,
+        fecha: new Date().toISOString(),
+        refTipo: 'adelanto',
+        refId: a.id,
+      });
+      supaSync('comunicaciones', DB.comunicaciones[DB.comunicaciones.length - 1]).catch(() => {});
+      renderGestionAdelantos('enproceso');
+    })
     .catch((e) => showToast(e.message, 'err'));
 }
 
@@ -121,7 +137,23 @@ export function rechazarAdelantoSup(id) {
   a.historial = a.historial || [];
   a.historial.push({ fecha: new Date().toISOString(), tipo: 'rechazado_supervisor', comentario: motivo, usuario: getCurrentUser()?.nombre || '' });
   supaSync('adelantos', a)
-    .then(() => { showToast('Adelanto rechazado', 'warn'); notificarCambio(a, 'Tu pedido de adelanto fue rechazado por el supervisor.'); renderGestionAdelantos('pendientes'); })
+    .then(() => {
+      showToast('Adelanto rechazado', 'warn');
+      notificarCambio(a, 'Tu pedido de adelanto fue rechazado por el supervisor.');
+      DB.comunicaciones.push({
+        id: Date.now().toString(),
+        tipo: 'general',
+        de: 'sistema',
+        para: a.nombreAsociado,
+        mensaje: `Tu pedido de adelanto de $${a.monto} fue RECHAZADO por supervisor. Motivo: ${motivo}`,
+        leido: false,
+        fecha: new Date().toISOString(),
+        refTipo: 'adelanto',
+        refId: a.id,
+      });
+      supaSync('comunicaciones', DB.comunicaciones[DB.comunicaciones.length - 1]).catch(() => {});
+      renderGestionAdelantos('pendientes');
+    })
     .catch((e) => showToast(e.message, 'err'));
 }
 
@@ -135,7 +167,23 @@ export function aprobarAdelantoFin(id) {
   a.historial = a.historial || [];
   a.historial.push({ fecha: new Date().toISOString(), tipo: 'aprobado_finanzas', comentario: '', usuario: a.aprobadoPorFin });
   supaSync('adelantos', a)
-    .then(() => { showToast('Adelanto aprobado por finanzas', 'ok'); notificarCambio(a, `Tu adelanto de $${a.monto} fue aprobado por finanzas.`); renderGestionAdelantos('aprobados'); })
+    .then(() => {
+      showToast('Adelanto aprobado por finanzas', 'ok');
+      notificarCambio(a, `Tu adelanto de $${a.monto} fue aprobado por finanzas.`);
+      DB.comunicaciones.push({
+        id: Date.now().toString(),
+        tipo: 'general',
+        de: 'sistema',
+        para: a.nombreAsociado,
+        mensaje: `Tu pedido de adelanto de $${a.monto} fue APROBADO por finanzas. Ya puedes retirarlo.`,
+        leido: false,
+        fecha: new Date().toISOString(),
+        refTipo: 'adelanto',
+        refId: a.id,
+      });
+      supaSync('comunicaciones', DB.comunicaciones[DB.comunicaciones.length - 1]).catch(() => {});
+      renderGestionAdelantos('aprobados');
+    })
     .catch((e) => showToast(e.message, 'err'));
 }
 
@@ -149,7 +197,23 @@ export function rechazarAdelantoFin(id) {
   a.historial = a.historial || [];
   a.historial.push({ fecha: new Date().toISOString(), tipo: 'rechazado_finanzas', comentario: motivo, usuario: getCurrentUser()?.nombre || '' });
   supaSync('adelantos', a)
-    .then(() => { showToast('Adelanto rechazado', 'warn'); notificarCambio(a, 'Tu pedido de adelanto fue rechazado por finanzas.'); renderGestionAdelantos('enproceso'); })
+    .then(() => {
+      showToast('Adelanto rechazado', 'warn');
+      notificarCambio(a, 'Tu pedido de adelanto fue rechazado por finanzas.');
+      DB.comunicaciones.push({
+        id: Date.now().toString(),
+        tipo: 'general',
+        de: 'sistema',
+        para: a.nombreAsociado,
+        mensaje: `Tu pedido de adelanto de $${a.monto} fue RECHAZADO por finanzas. Motivo: ${motivo}`,
+        leido: false,
+        fecha: new Date().toISOString(),
+        refTipo: 'adelanto',
+        refId: a.id,
+      });
+      supaSync('comunicaciones', DB.comunicaciones[DB.comunicaciones.length - 1]).catch(() => {});
+      renderGestionAdelantos('enproceso');
+    })
     .catch((e) => showToast(e.message, 'err'));
 }
 

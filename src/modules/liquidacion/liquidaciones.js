@@ -6,6 +6,7 @@ import { supaSync } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast } from '../../shared/modal.js';
 import { esc, fechaISOToDisplay } from '../../shared/helpers.js';
 import { getCurrentUser } from '../../shared/auth.js';
+import { crearNotificacion } from '../../shared/notificaciones.js';
 import { obtenerHorasLiquidacion, redondear2, periodoLabel } from './liqUtils.js';
 
 export function getReciboById(id) {
@@ -158,7 +159,27 @@ export function emitirRecibo(id) {
   l.estado = 'Emitido';
   l.fechaEmision = new Date().toISOString();
   supaSync('liquidaciones', l)
-    .then(() => { showToast('Recibo emitido', 'ok'); renderLiquidaciones('emitidos'); })
+    .then(() => {
+      showToast('Recibo emitido', 'ok');
+      crearNotificacion({
+        tipo: 'aviso_pago',
+        mensaje: `Se impactó tu pago del período ${l.mes}/${l.anio}. Sueldo bruto: $${redondear2(l.sueldoBruto)}. Neto: $${redondear2(l.sueldoNeto)}.`,
+        destinatarios: [l.nombreAsociado],
+      });
+      DB.comunicaciones.push({
+        id: Date.now().toString(),
+        tipo: 'aviso_pago',
+        de: 'sistema',
+        para: l.nombreAsociado,
+        mensaje: `Se impactó tu pago del período ${l.mes}/${l.anio}. Bruto: $${redondear2(l.sueldoBruto)}. Neto: $${redondear2(l.sueldoNeto)}.`,
+        leido: false,
+        fecha: new Date().toISOString(),
+        refTipo: 'liquidacion',
+        refId: l.id,
+      });
+      supaSync('comunicaciones', DB.comunicaciones[DB.comunicaciones.length - 1]).catch(() => {});
+      renderLiquidaciones('emitidos');
+    })
     .catch((e) => showToast(e.message, 'err'));
 }
 

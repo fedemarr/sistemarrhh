@@ -1,4 +1,5 @@
-// Postularme — formulario público que inserta en candidatos (política RLS de inserción anónima).
+// Postularme — formulario público dinámico que inserta en candidatos (política RLS de inserción anónima).
+// Los campos se cargan desde config_form_postulacion (Supabase) y caen a defaults si no hay config.
 
 import { getClient, hayConfigSupabase, _toSnakeRow } from './shared/supabase.js';
 
@@ -8,41 +9,92 @@ function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+const DEFAULT_CAMPOS = [
+  { key: 'nombre', label: 'Nombre', type: 'text', required: true, order: 1 },
+  { key: 'apellido', label: 'Apellido', type: 'text', required: true, order: 2 },
+  { key: 'dni', label: 'DNI', type: 'text', required: true, order: 3 },
+  { key: 'email', label: 'Email', type: 'email', required: false, order: 4 },
+  { key: 'telefono', label: 'Teléfono', type: 'tel', required: false, order: 5 },
+  { key: 'fechaNacimiento', label: 'Fecha de nacimiento', type: 'date', required: false, order: 6 },
+  { key: 'servicioDeseado', label: 'Servicio deseado', type: 'text', required: false, order: 7 },
+  { key: 'disponibilidad', label: 'Disponibilidad', type: 'select', required: false, options: 'Full time,Part time,Solo mañanas,Solo tardes', order: 8 },
+  { key: 'experiencia', label: 'Experiencia', type: 'textarea', required: false, order: 9 },
+];
+
+function renderCampo(c) {
+  const req = c.required ? ' required' : '';
+  const reqLabel = c.required ? ' *' : '';
+  const id = `campo-${c.key}`;
+  if (c.type === 'select') {
+    const opts = (c.options || '').split(',').map((o) => o.trim()).filter(Boolean);
+    return `<div class="field"><label for="${id}">${esc(c.label)}${reqLabel}</label><select name="${esc(c.key)}" id="${id}"${req}><option value="">Seleccionar…</option>${opts.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select></div>`;
+  }
+  if (c.type === 'textarea') {
+    return `<div class="field full"><label for="${id}">${esc(c.label)}${reqLabel}</label><textarea name="${esc(c.key)}" id="${id}" rows="3"${req}></textarea></div>`;
+  }
+  if (c.type === 'file') {
+    return `<div class="field full"><label for="${id}">${esc(c.label)}${reqLabel}</label><input type="file" name="${esc(c.key)}" id="${id}"${req} /></div>`;
+  }
+  return `<div class="field"><label for="${id}">${esc(c.label)}${reqLabel}</label><input type="${esc(c.type || 'text')}" name="${esc(c.key)}" id="${id}"${req} /></div>`;
+}
+
 function mostrarEstado(ok, msg) {
   const err = $('postular-err');
   err.textContent = msg;
   err.style.color = ok ? '#167c3f' : '#b00020';
 }
 
+async function cargarConfig() {
+  if (!hayConfigSupabase()) return null;
+  try {
+    const client = getClient();
+    const { data, error } = await client.from('config_form_postulacion').select('*').limit(1);
+    if (error || !data || !data.length) return null;
+    const row = data[0];
+    let campos = row.campos;
+    if (typeof campos === 'string') {
+      try { campos = JSON.parse(campos); } catch { campos = null; }
+    }
+    if (!campos || !campos.length) return null;
+    return { campos, speech: row.speech || '' };
+  } catch {
+    return null;
+  }
+}
+
 async function enviar() {
   const form = $('form-postular');
   if (!form) return;
   const f = form.elements;
-  const nombre = f.nombre.value.trim();
-  const apellido = f.apellido.value.trim();
-  const dni = String(f.dni.value || '').trim();
-  if (!nombre || !apellido || !dni) { mostrarEstado(false, 'Nombre, apellido y DNI son obligatorios.'); return; }
-  if (!/^\d{6,8}$/.test(dni)) { mostrarEstado(false, 'El DNI debe tener entre 6 y 8 dígitos.'); return; }
-
-  const candidato = {
-    id: Date.now().toString(),
-    nombre: `${nombre} ${apellido}`,
-    dni,
-    telefono: f.telefono.value.trim(),
-    email: f.email.value.trim(),
-    fechaNacimiento: f.fechaNacimiento.value || '',
-    servicioDeseado: f.servicioDeseado.value.trim(),
-    disponibilidad: f.disponibilidad.value,
-    experiencia: f.experiencia.value.trim(),
-    estado: 'Sin citar',
-    fecha: new Date().toISOString(),
-    origen: 'postularme',
-  };
-
   const btn = form.querySelector('button[type=submit]');
   btn.disabled = true;
   btn.textContent = 'Enviando…';
   try {
+    const fd = new FormData(form);
+    const datos = {};
+    fd.forEach((v, k) => { datos[k] = v; });
+
+    const nombre = (datos.nombre || '').trim();
+    const apellido = (datos.apellido || '').trim();
+    const dni = String(datos.dni || '').trim();
+    if (!nombre || !apellido || !dni) { mostrarEstado(false, 'Nombre, apellido y DNI son obligatorios.'); return; }
+    if (!/^\d{6,8}$/.test(dni)) { mostrarEstado(false, 'El DNI debe tener entre 6 y 8 dígitos.'); return; }
+
+    const candidato = {
+      id: Date.now().toString(),
+      nombre: `${nombre} ${apellido}`,
+      dni,
+      telefono: (datos.telefono || '').trim(),
+      email: (datos.email || '').trim(),
+      fechaNacimiento: datos.fechaNacimiento || '',
+      servicioDeseado: (datos.servicioDeseado || '').trim(),
+      disponibilidad: datos.disponibilidad || '',
+      experiencia: (datos.experiencia || '').trim(),
+      estado: 'Sin citar',
+      fecha: new Date().toISOString(),
+      origen: 'postularme',
+    };
+
     const client = getClient();
     const { error } = await client.from('candidatos').insert([_toSnakeRow(candidato)]);
     if (error) throw new Error(error.message);
@@ -56,10 +108,31 @@ async function enviar() {
   }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  if (!hayConfigSupabase()) {
-    mostrarEstado(false, 'El sistema todavía no está configurado (falta Supabase). Contactate con RRHH.');
-    return;
-  }
+function renderForm(campos, speech) {
+  const cont = $('screen-postular');
+  const sorted = [...campos].sort((a, b) => (a.order || 0) - (b.order || 0));
+  cont.innerHTML = `
+    <div class="login-card" style="max-width:720px">
+      <div class="logo">R</div>
+      <h1>Postulación laboral</h1>
+      ${speech ? `<div class="card" style="margin-bottom:16px;padding:12px"><p>${esc(speech)}</p></div>` : ''}
+      <p class="sub">Completá el formulario y tu candidatura queda registrada.</p>
+      <form id="form-postular">
+        <div id="postular-err" class="login-err"></div>
+        <div class="form-grid">
+          ${sorted.map(renderCampo).join('')}
+        </div>
+        <button type="submit" class="btn">Enviar postulación</button>
+      </form>
+      <p class="muted" style="text-align:center;margin-top:12px"><a href="/">← Volver al inicio</a></p>
+    </div>`;
   $('form-postular').addEventListener('submit', (ev) => { ev.preventDefault(); enviar(); });
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const config = await cargarConfig();
+  renderForm(
+    config?.campos || DEFAULT_CAMPOS,
+    config?.speech || ''
+  );
 });

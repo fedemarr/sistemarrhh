@@ -578,9 +578,10 @@ export function abrirMensajeEntrevista(id) {
   const nombre = c.nombre || '';
   const fecha = c.fechaCita || '';
   const hora = c.horaCita || '';
+  const linkAgendar = `${location.origin}/agendar-entrevista?dni=${encodeURIComponent(c.dni || '')}&nombre=${encodeURIComponent(c.nombre || '')}`;
   const templates = [
     `Hola ${nombre}, te contactamos de [empresa]. ¿Podrías confirmarnos tu disponibilidad para una entrevista presencial? ¿Qué día y horario te viene mejor?`,
-    `Hola ${nombre}, quedamos en coordinar una entrevista. Te paso el link para que elijas tu turno: [LINK]`,
+    `Hola ${nombre}, quedamos en coordinar una entrevista. Te paso el link para que completes tus datos: ${linkAgendar}`,
     `Hola ${nombre}, pasaste a la etapa de pre-selección. Te citamos el ${fecha} a las ${hora}. ¿Confirmas asistencia?`,
   ];
   ensureModal('modal-mensaje-entrevista', `

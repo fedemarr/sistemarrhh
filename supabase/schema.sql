@@ -665,6 +665,30 @@ create table if not exists public.logs (
   created_at timestamptz default now(), updated_at timestamptz default now()
 );
 
+-- ---- Config formularios ------------------------------------------------------
+create table if not exists public.config_form_postulacion (
+  id_local text primary key,
+  campos jsonb not null default '[]'::jsonb,
+  speech text default '',
+  created_at timestamptz default now(), updated_at timestamptz default now()
+);
+
+create table if not exists public.config_form_entrevista (
+  id_local text primary key,
+  campos jsonb not null default '[]'::jsonb,
+  instrucciones text default '',
+  created_at timestamptz default now(), updated_at timestamptz default now()
+);
+
+-- ---- Comunicaciones ----------------------------------------------------------
+create table if not exists public.comunicaciones (
+  id_local text primary key,
+  tipo text, de_text text, para_text text, mensaje text,
+  leido boolean default false, fecha text,
+  ref_tipo text, ref_id text,
+  created_at timestamptz default now(), updated_at timestamptz default now()
+);
+
 -- ============================================================================
 -- 2) TENANT: empresa_id en todas las tablas de tenant + índices
 -- ============================================================================
@@ -746,6 +770,27 @@ create policy "anon_insert_candidatos" on public.candidatos
 drop policy if exists "anon_select_candidatos" on public.candidatos;
 create policy "anon_select_candidatos" on public.candidatos
   for select to anon using (false);
+
+-- Config form postulacion: anon puede leer para formulario público.
+alter table public.config_form_postulacion enable row level security;
+drop policy if exists "anon_select_config_postulacion" on public.config_form_postulacion;
+create policy "anon_select_config_postulacion" on public.config_form_postulacion
+  for select to anon using (true);
+drop policy if exists "anon_insert_config_postulacion" on public.config_form_postulacion;
+create policy "anon_insert_config_postulacion" on public.config_form_postulacion
+  for insert to anon with check (true);
+
+-- Config form entrevista: solo autenticados.
+alter table public.config_form_entrevista enable row level security;
+
+-- Comunicaciones: anon puede insertar (formulario público), autenticados gestionan.
+alter table public.comunicaciones enable row level security;
+drop policy if exists "anon_insert_comunicaciones" on public.comunicaciones;
+create policy "anon_insert_comunicaciones" on public.comunicaciones
+  for insert to anon with check (true);
+drop policy if exists "anon_select_comunicaciones" on public.comunicaciones;
+create policy "anon_select_comunicaciones" on public.comunicaciones
+  for select to anon using (true);
 
 -- ============================================================================
 -- 4) STORAGE — bucket de adjuntos (PDFs)

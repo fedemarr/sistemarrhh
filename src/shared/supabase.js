@@ -141,6 +141,9 @@ export const _SM = {
   perfiles: 'perfiles',
   empresas: 'empresas',
   logs: 'logs',
+  configFormPostulacion: 'config_form_postulacion',
+  configFormEntrevista: 'config_form_entrevista',
+  comunicaciones: 'comunicaciones',
 };
 
 // === Mapeo camelCase ↔ snake_case (explícito + overrides por acrónimos) ===

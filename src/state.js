@@ -33,6 +33,7 @@ export const _KEYS = [
   'adelantos', 'pedidosAdelantos', 'pedidosAdelantosEventos', 'descuentosAdelantosPendientes', 'motivosAdelantosCfg',
   'planillasAdelantos', 'planillasInformales', 'adelantosInformales', 'prestamos', 'solicitudesPrestamos', 'adelantosConfig',
   'sugerencias', 'adjuntos', 'notificaciones', 'usuarios', 'perfiles', 'empresas', 'logs',
+  'configFormPostulacion', 'configFormEntrevista', 'comunicaciones',
 ];
 
 export function initDB() {
@@ -53,7 +54,7 @@ export const PERFILES = {
       'capacitaciones', 'vacaciones', 'descansos', 'competencia', 'sanciones', 'enfermos', 'legales', 'uniformes',
       'categorias', 'smvm', 'liquidacion_horas', 'liq_admin', 'mantenimiento', 'retenes', 'liquidaciones',
       'monotributos', 'retenciones', 'descuentos', 'paritarias', 'feriados',
-      'pedidos_adelantos', 'gestion_adelantos', 'sugerencias',
+      'pedidos_adelantos', 'gestion_adelantos', 'sugerencias', 'comunicaciones',
     ],
     desc: 'Todo el sector RRHH: selección, ingreso, personal, liquidación.',
   },
@@ -80,7 +81,7 @@ export const PERFILES = {
     desc: 'Pedidos de personal, descansos y adelantos (solicitud), uniformes (entrega), sus grillas.',
   },
   Asociado: {
-    modulos: ['mis_adelantos', 'sugerencias'],
+    modulos: ['mis_adelantos', 'sugerencias', 'comunicaciones'],
     desc: 'Portal del asociado: mis adelantos y buzón de sugerencias.',
   },
 };

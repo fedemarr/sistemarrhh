@@ -65,8 +65,9 @@ export function construirMenu() {
     { label: 'Personal', keys: ['capacitaciones', 'vacaciones', 'descansos', 'competencia', 'sanciones', 'enfermos', 'legales', 'uniformes'] },
     { label: 'Liquidación', keys: ['categorias', 'smvm', 'liquidacion_horas', 'liq_admin', 'mantenimiento', 'retenes', 'liquidaciones', 'monotributos', 'retenciones', 'descuentos', 'paritarias', 'feriados'] },
     { label: 'Adelantos', keys: ['pedidos_adelantos', 'gestion_adelantos', 'mis_adelantos'] },
-    { label: 'Transversales', keys: ['sugerencias'] },
+    { label: 'Transversales', keys: ['sugerencias', 'comunicaciones'] },
     ...(u?.esSuperadmin ? [{ label: 'Administración', keys: ['empresas'] }] : []),
+    ...((u?.esSuperadmin || u?.perfil === 'RRHH') ? [{ label: 'Configuración', keys: ['config_form_postulacion', 'config_form_entrevista'] }] : []),
   ];
 
   let html = '<div class="brand"><div class="logo">R</div><div>' + esc(APP.nombre) + '</div></div><div class="menu">';

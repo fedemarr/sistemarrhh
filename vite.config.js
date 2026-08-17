@@ -15,6 +15,7 @@ export default defineConfig({
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
         postularme: fileURLToPath(new URL('./postularme.html', import.meta.url)),
+        'agendar-entrevista': fileURLToPath(new URL('./agendar-entrevista.html', import.meta.url)),
       },
     },
   },
