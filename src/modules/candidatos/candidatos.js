@@ -7,7 +7,7 @@ import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/moda
 import { esc, esDniValido, fechaISOToDisplay, displayToISO, calcularEdad } from '../../shared/helpers.js';
 import { getCurrentUser } from '../../shared/auth.js';
 
-export const ESTADOS_ACTIVOS_CAND = ['Sin citar', 'Citado', 'Entrevistado', 'Aprobado'];
+export const ESTADOS_ACTIVOS_CAND = ['Precandidato', 'Sin citar', 'Citado', 'Entrevistado', 'Aprobado'];
 export const ESTADOS_HISTORICO_CAND = ['Rechazado', 'Baja', 'Caducado', 'MT Social', 'MT con deuda'];
 export const MOTIVOS_RECHAZO = ['No cubre perfil', 'Falta de disponibilidad', 'No asistió', 'Perfil laboral', 'Otro'];
 export const MEDIOS = ['Redes', 'Referido', 'Web', 'Volante', 'Otro'];
@@ -29,6 +29,7 @@ export function tabCandPrincipal(tab) {
   const container = document.getElementById('screen-candidatos');
   container.innerHTML = `
     <div class="tabs">
+      <button class="tab-btn ${seccion === 'precandidatos' ? 'active' : ''}" onclick="tabCandPrincipal('precandidatos')">Pre-candidatos</button>
       <button class="tab-btn ${seccion === 'base' ? 'active' : ''}" onclick="tabCandPrincipal('base')">Candidatos</button>
       <button class="tab-btn ${seccion === 'calendario' ? 'active' : ''}" onclick="tabCandPrincipal('calendario')">Calendario</button>
       <button class="tab-btn ${seccion === 'link' ? 'active' : ''}" onclick="tabCandPrincipal('link')">Link de postulación</button>
@@ -36,7 +37,8 @@ export function tabCandPrincipal(tab) {
     </div>
     <div id="cand-contenido"></div>`;
   const cont = document.getElementById('cand-contenido');
-  if (seccion === 'calendario') renderCalendario(cont);
+  if (seccion === 'precandidatos') renderPrecandidatos();
+  else if (seccion === 'calendario') renderCalendario(cont);
   else if (seccion === 'link') renderLinkPublico(cont);
   else if (seccion === 'importar') renderImportadorHistorico(cont);
   else renderCandidatos();
@@ -88,7 +90,7 @@ export function toggleVerCandidatos(ver) {
 }
 
 function chipEstadoCand(e) {
-  const cls = e === 'Aprobado' ? 'chip-verde' : e === 'Rechazado' || e === 'Baja' ? 'chip-rojo' : e === 'Entrevistado' ? 'chip-naranja' : e === 'Citado' ? 'chip-azul' : 'chip-gris';
+  const cls = e === 'Aprobado' ? 'chip-verde' : e === 'Rechazado' || e === 'Baja' ? 'chip-rojo' : e === 'Entrevistado' ? 'chip-naranja' : e === 'Citado' ? 'chip-azul' : e === 'Precandidato' ? 'chip-gris' : 'chip-gris';
   return `<span class="chip ${cls}">${esc(e)}</span>`;
 }
 
@@ -112,8 +114,14 @@ function accionesCandidato(c) {
   const a = [];
   a.push(`<button class="btn btn-secondary btn-sm" onclick="abrirDetalleCandidatoPorId('${esc(String(c.id))}')">Ver</button>`);
   if (esHistoricoCand(c)) return a.join('');
-  if (c.estado === 'Sin citar') a.push(`<button class="btn btn-sm" onclick="abrirCitarPorId('${esc(String(c.id))}')">Citar</button>`);
-  if (c.estado === 'Citado') a.push(`<button class="btn btn-warning btn-sm" onclick="registrarAsistencia('${esc(String(c.id))}')">Registrar asistencia</button>`);
+  if (c.estado === 'Sin citar') {
+    a.push(`<button class="btn btn-sm" onclick="abrirCitarPorId('${esc(String(c.id))}')">Citar</button>`);
+    a.push(`<button class="btn btn-secondary btn-sm" onclick="abrirMensajeEntrevista('${esc(String(c.id))}')">Enviar mensaje</button>`);
+  }
+  if (c.estado === 'Citado') {
+    a.push(`<button class="btn btn-warning btn-sm" onclick="registrarAsistencia('${esc(String(c.id))}')">Registrar asistencia</button>`);
+    a.push(`<button class="btn btn-secondary btn-sm" onclick="abrirMensajeEntrevista('${esc(String(c.id))}')">Enviar mensaje</button>`);
+  }
   if (c.estado === 'Entrevistado') {
     a.push(`<button class="btn btn-sm" onclick="abrirResultadoPorId('${esc(String(c.id))}')">Resultado</button>`);
   }
@@ -185,7 +193,7 @@ export function abrirNuevoCandidato() {
     const error = validarCandidato(datos);
     if (error) { showToast(error, 'err'); return; }
     datos.id = Date.now().toString();
-    datos.estado = 'Sin citar';
+    datos.estado = 'Precandidato';
     datos.creadoPor = getCurrentUser()?.nombre || '';
     DB.candidatos.push(datos);
     supaSync('candidatos', datos)
@@ -481,6 +489,145 @@ export function copiarLinkPostulacion() {
   navigator.clipboard?.writeText(link)
     .then(() => showToast('Link copiado', 'ok'))
     .catch(() => showToast('No se pudo copiar', 'err'));
+}
+
+export function renderPrecandidatos() {
+  const cont = document.getElementById('cand-contenido');
+  const buscar = document.getElementById('cand-buscar-pre')?.value || '';
+  const lista = (DB.candidatos || [])
+    .filter((c) => c.estado === 'Precandidato')
+    .filter((c) => !buscar || [c.apellido, c.nombre, c.dni, c.telefono].some((v) => String(v || '').toLowerCase().includes(buscar.toLowerCase())))
+    .sort((a, b) => String(b.id).localeCompare(String(a.id)));
+
+  cont.innerHTML = `
+    <div class="toolbar">
+      <input type="text" id="cand-buscar-pre" placeholder="Buscar apellido / DNI…" value="${esc(buscar)}" oninput="renderPrecandidatos()" />
+      <span class="muted">${lista.length} precandidato(s)</span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr><th>Apellido</th><th>Nombre</th><th>DNI</th><th>Tel</th><th>Zona</th><th>Medio</th><th>Acciones</th></tr></thead>
+        <tbody>
+          ${lista.length ? lista.map(filaPrecandidato).join('') : '<tr><td colspan="7" class="empty">Sin precandidatos pendientes.</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function filaPrecandidato(c) {
+  return `<tr>
+    <td>${esc(c.apellido || '')}</td>
+    <td>${esc(c.nombre || '')}</td>
+    <td>${esc(c.dni || '')}</td>
+    <td>${esc(c.telefono || c.tel || '')}</td>
+    <td>${esc(c.zona || '')}</td>
+    <td>${esc(c.medio || '')}</td>
+    <td class="acciones">
+      <button class="btn btn-success btn-sm" onclick="aprobarPrecandidato('${esc(String(c.id))}')">Aprobar</button>
+      <button class="btn btn-danger btn-sm" onclick="rechazarPrecandidato('${esc(String(c.id))}')">Rechazar</button>
+      <button class="btn btn-secondary btn-sm" onclick="abrirDetalleCandidatoPorId('${esc(String(c.id))}')">Ver</button>
+    </td>
+  </tr>`;
+}
+
+export function aprobarPrecandidato(id) {
+  const c = getCandById(id);
+  if (!c) return;
+  c.estado = 'Sin citar';
+  supaSync('candidatos', c)
+    .then(() => { showToast('Precandidato aprobado — ingresa al flujo', 'ok'); renderPrecandidatos(); })
+    .catch((e) => showToast(e.message, 'err'));
+}
+
+export function rechazarPrecandidato(id) {
+  const c = getCandById(id);
+  if (!c) return;
+  ensureModal('modal-rechazar-pre', `
+    <div class="modal-head"><h2>Rechazar precandidato — ${esc(c.apellido)}, ${esc(c.nombre)}</h2><button class="modal-close" onclick="cerrarModal('modal-rechazar-pre')">×</button></div>
+    <form id="form-rechazar-pre">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field full"><label>Motivo de rechazo *</label>
+            <select name="motivoRechazo" required>
+              <option value="">Seleccionar…</option>
+              ${MOTIVOS_RECHAZO.map((m) => `<option>${m}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field full"><label>Observaciones</label><textarea name="obsRechazo" rows="2"></textarea></div>
+        </div>
+      </div>
+      <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-rechazar-pre')">Cancelar</button><button type="submit" class="btn btn-danger">Confirmar rechazo</button></div>
+    </form>`, {});
+  document.getElementById('form-rechazar-pre').addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const datos = capturar(ev);
+    if (!datos.motivoRechazo) { showToast('El motivo de rechazo es obligatorio', 'err'); return; }
+    c.estado = 'Rechazado';
+    c.motivoRechazo = datos.motivoRechazo;
+    c.obs = (c.obs || '') + ' [Rechazo pre-candidato: ' + datos.motivoRechazo + ']';
+    supaSync('candidatos', c)
+      .then(() => { cerrarModal('modal-rechazar-pre'); showToast('Precandidato rechazado', 'warn'); renderPrecandidatos(); })
+      .catch((e) => showToast(e.message, 'err'));
+  });
+}
+
+export function abrirMensajeEntrevista(id) {
+  const c = getCandById(id);
+  if (!c) return;
+  const tel = c.telefono || c.tel || '';
+  const nombre = c.nombre || '';
+  const fecha = c.fechaCita || '';
+  const hora = c.horaCita || '';
+  const templates = [
+    `Hola ${nombre}, te contactamos de [empresa]. ¿Podrías confirmarnos tu disponibilidad para una entrevista presencial? ¿Qué día y horario te viene mejor?`,
+    `Hola ${nombre}, quedamos en coordinar una entrevista. Te paso el link para que elijas tu turno: [LINK]`,
+    `Hola ${nombre}, pasaste a la etapa de pre-selección. Te citamos el ${fecha} a las ${hora}. ¿Confirmas asistencia?`,
+  ];
+  ensureModal('modal-mensaje-entrevista', `
+    <div class="modal-head"><h2>Enviar mensaje — ${esc(c.apellido)}, ${esc(c.nombre)}</h2><button class="modal-close" onclick="cerrarModal('modal-mensaje-entrevista')">×</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>Teléfono</label><input id="msg-entrevista-tel" value="${esc(tel)}" /></div>
+        <div class="field full"><label>Plantilla</label>
+          <select id="msg-entrevista-tpl" onchange="seleccionarPlantillaEntrevista()">
+            <option value="0">Confirmación de disponibilidad</option>
+            <option value="1">Link para elegir turno</option>
+            <option value="2">Confirmación de cita</option>
+          </select>
+        </div>
+        <div class="field full"><label>Mensaje</label><textarea id="msg-entrevista-texto" rows="5">${esc(templates[0])}</textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-mensaje-entrevista')">Cancelar</button>
+      <button type="button" class="btn" onclick="copiarMensajeEntrevista()">Copiar mensaje</button>
+      <button type="button" class="btn btn-success" onclick="abrirWhatsAppEntrevista()">WhatsApp</button>
+    </div>
+  `, { size: 'modal-lg' });
+  window._msgEntrevistaTemplates = templates;
+  window._msgEntrevistaId = id;
+}
+
+export function seleccionarPlantillaEntrevista() {
+  const idx = Number(document.getElementById('msg-entrevista-tpl').value);
+  const texto = document.getElementById('msg-entrevista-texto');
+  if (texto && window._msgEntrevistaTemplates?.[idx] != null) {
+    texto.value = window._msgEntrevistaTemplates[idx];
+  }
+}
+
+export function copiarMensajeEntrevista() {
+  const texto = document.getElementById('msg-entrevista-texto')?.value || '';
+  navigator.clipboard?.writeText(texto)
+    .then(() => showToast('Mensaje copiado', 'ok'))
+    .catch(() => showToast('No se pudo copiar', 'err'));
+}
+
+export function abrirWhatsAppEntrevista() {
+  const tel = (document.getElementById('msg-entrevista-tel')?.value || '').replace(/\D/g, '');
+  const texto = document.getElementById('msg-entrevista-texto')?.value || '';
+  if (!tel) { showToast('Ingresá un número de teléfono', 'err'); return; }
+  window.open(`https://wa.me/${tel}?text=${encodeURIComponent(texto)}`, '_blank');
 }
 
 // Adjuntos de candidato (entrevista/proceso) — helper por si se usa desde el detalle.

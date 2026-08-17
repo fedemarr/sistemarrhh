@@ -4,7 +4,7 @@ import { initDB, APP, registerScreens, PERFILES, DB } from './state.js';
 import { hayConfigSupabase, supaInit } from './shared/supabase.js';
 import { login, logout, getCurrentUser, restaurarDesdeSesion } from './shared/auth.js';
 import { navTo, construirMenu } from './shared/nav.js';
-import { showToast } from './shared/modal.js';
+import { showToast, cerrarModal, ensureModal, capturar } from './shared/modal.js';
 import { esc } from './shared/helpers.js';
 import { moduleScreenConfigs } from './modules/index.js';
 import { notificacionesPara } from './shared/notificaciones.js';
@@ -13,6 +13,10 @@ initDB();
 registerScreens(moduleScreenConfigs);
 
 window.navTo = navTo;
+window.cerrarModal = cerrarModal;
+window.ensureModal = ensureModal;
+window.showToast = showToast;
+window.capturar = capturar;
 window.cerrarSesion = async () => {
   await logout();
   mostrarLogin();

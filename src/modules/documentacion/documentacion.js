@@ -5,6 +5,7 @@ import { DB } from '../../state.js';
 import { supaSync } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/modal.js';
 import { esc, fechaISOToDisplay, calcularEstadoVencimiento } from '../../shared/helpers.js';
+import { getGeminiKey, analizarConGemini } from '../../shared/ai.js';
 
 export { calcularEstadoVencimiento };
 
@@ -294,12 +295,18 @@ export function revertirDocum(id) {
     .catch((e) => showToast(e.message, 'err'));
 }
 
-export function analizarAntecedentesIA(id) {
+export async function analizarAntecedentesIA(id) {
   const d = getDocumById(id);
   if (!d) return;
-  showToast('Analizando antecedentes con IA (mock)…', 'warn');
-  setTimeout(() => {
-    showToast('IA: antecedentes sin observaciones', 'ok');
-    if (document.getElementById('modal-docum-gestion-overlay')) abrirGestionDocum(d.id);
-  }, 1500);
+  if (!getGeminiKey()) { showToast('Configure la API key de Gemini en Configuración IA.', 'warn'); return; }
+  showToast('Analizando antecedentes con IA…', 'warn');
+  try {
+    const prompt = `Analiza estos antecedentes penales y documentación de ingreso. ¿Hay observaciones que impidan el alta?\n\nDatos:\n- Nombre: ${d.nombre}\n- DNI: ${d.dni}\n- Estado: ${d.estado}\n- Antecedentes vencimiento: ${d.antecVencimiento || 'Sin dato'}\n- Libreta aplica: ${d.libretaAplica ? 'Sí' : 'No'}\n- Libreta vencimiento: ${d.libretaVencimiento || 'Sin dato'}\n- Curso tiene: ${d.cursoTiene ? 'Sí' : 'No'}\n- Curso vencimiento: ${d.cursoVencimiento || 'Sin dato'}\n- Motivo: ${d.motivo || 'Sin motivo'}\n- Observaciones: ${d.observaciones || 'Sin observaciones'}`;
+    const respuesta = await analizarConGemini(prompt);
+    ensureModal('modal-ia-resultado', `
+      <div class="modal-head"><h2>Resultado IA — Antecedentes</h2><button class="modal-close" onclick="cerrarModal('modal-ia-resultado')">×</button></div>
+      <div class="modal-body"><pre style="white-space:pre-wrap;font-size:0.9em">${esc(respuesta)}</pre></div>
+      <div class="modal-foot"><button class="btn btn-secondary" onclick="cerrarModal('modal-ia-resultado')">Cerrar</button></div>
+    `, { size: 'modal-lg' });
+  } catch (e) { showToast(e.message, 'err'); }
 }

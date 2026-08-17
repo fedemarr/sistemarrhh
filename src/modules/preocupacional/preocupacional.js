@@ -5,6 +5,7 @@ import { DB } from '../../state.js';
 import { supaSync } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/modal.js';
 import { esc, fechaISOToDisplay } from '../../shared/helpers.js';
+import { getGeminiKey, analizarConGemini } from '../../shared/ai.js';
 
 export const PRESTADORES = ['MEDE', 'Grupo CMC', 'IDT'];
 export const RESULTADOS_PREOCUP = ['Apto', 'Apto con observaciones', 'No Apto'];
@@ -247,16 +248,20 @@ export function bajaPreocup(id) {
     .catch((e) => showToast(e.message, 'err'));
 }
 
-export function analizarAptoMedicoIA(id) {
+export async function analizarAptoMedicoIA(id) {
   const p = getPreocupById(id);
   if (!p) return;
-  showToast('Analizando apto médico con IA (mock)…', 'warn');
-  setTimeout(() => {
-    p.resultado = 'Apto';
-    supaSync('preocupacionales', p)
-      .then(() => { showToast('IA sugirió: Apto', 'ok'); abrirGestionPreocup(p.id); })
-      .catch((e) => showToast(e.message, 'err'));
-  }, 1500);
+  if (!getGeminiKey()) { showToast('Configure la API key de Gemini en Configuración IA.', 'warn'); return; }
+  showToast('Analizando apto médico con IA…', 'warn');
+  try {
+    const prompt = `Analiza este apto médico y determina si el candidato es apto o no apto para el trabajo. Fundamenta tu respuesta.\n\nDatos:\n- Nombre: ${p.nombre}\n- DNI: ${p.dni}\n- Prestador: ${p.prestador}\n- Fecha turno: ${p.fechaTurno}\n- Fecha resultado: ${p.fechaResultado}\n- Resultado: ${p.resultado}\n- Observaciones: ${p.observaciones || 'Sin observaciones'}`;
+    const respuesta = await analizarConGemini(prompt);
+    ensureModal('modal-ia-resultado', `
+      <div class="modal-head"><h2>Resultado IA — Apto Médico</h2><button class="modal-close" onclick="cerrarModal('modal-ia-resultado')">×</button></div>
+      <div class="modal-body"><pre style="white-space:pre-wrap;font-size:0.9em">${esc(respuesta)}</pre></div>
+      <div class="modal-foot"><button class="btn btn-secondary" onclick="cerrarModal('modal-ia-resultado')">Cerrar</button></div>
+    `, { size: 'modal-lg' });
+  } catch (e) { showToast(e.message, 'err'); }
 }
 
 export function usarDatosIAApto(id, resultado) {

@@ -6,6 +6,7 @@ import { supaSync } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/modal.js';
 import { esc, fechaISOToDisplay } from '../../shared/helpers.js';
 import { getCurrentUser } from '../../shared/auth.js';
+import { getGeminiKey, analizarConGemini } from '../../shared/ai.js';
 
 export const RESULTADOS_PSICO = ['Pendiente', 'Apto+', 'Apto', 'Apto-', 'Apto condicional', 'No Apto'];
 export const ETAPAS_PSICO = [
@@ -285,18 +286,21 @@ export function revertirPsico(id) {
     .catch((e) => showToast(e.message, 'err'));
 }
 
-// Mock IA: analiza el informe (PDF) y rellena resultado/etapas sugeridas.
-export function analizarInformePsicoIA(id) {
+export async function analizarInformePsicoIA(id) {
   const p = getPsicoById(id);
   if (!p) return;
-  showToast('Analizando informe con IA (mock)…', 'warn');
-  setTimeout(() => {
-    p.resultado = 'Apto';
-    p.etapas = { psicotecnico: true, prelaboral: true, antecedentes: false, libreta: false };
-    supaSync('psicos', p)
-      .then(() => { showToast('IA sugirió: Apto (revisá las etapas)', 'ok'); abrirGestionPsico(p.id); })
-      .catch((e) => showToast(e.message, 'err'));
-  }, 1500);
+  if (!getGeminiKey()) { showToast('Configure la API key de Gemini en Configuración IA.', 'warn'); return; }
+  showToast('Analizando informe psicotécnico con IA…', 'warn');
+  try {
+    const etapas = p.etapas || {};
+    const prompt = `Analiza este informe psicotécnico y determina si el candidato es apto. Evaluá las capacidades cognitivas, personales y sociales.\n\nDatos:\n- Nombre: ${p.nombre}\n- DNI: ${p.dni}\n- Fecha realización: ${p.fechaRealizacion}\n- Resultado actual: ${p.resultado}\n- Etapas completadas: Psicotécnico=${etapas.psicotecnico ? 'Sí' : 'No'}, Prelaboral=${etapas.prelaboral ? 'Sí' : 'No'}, Antecedentes=${etapas.antecedentes ? 'Sí' : 'No'}, Libreta=${etapas.libreta ? 'Sí' : 'No'}\n- Observaciones: ${p.observaciones || 'Sin observaciones'}`;
+    const respuesta = await analizarConGemini(prompt);
+    ensureModal('modal-ia-resultado', `
+      <div class="modal-head"><h2>Resultado IA — Informe Psicotécnico</h2><button class="modal-close" onclick="cerrarModal('modal-ia-resultado')">×</button></div>
+      <div class="modal-body"><pre style="white-space:pre-wrap;font-size:0.9em">${esc(respuesta)}</pre></div>
+      <div class="modal-foot"><button class="btn btn-secondary" onclick="cerrarModal('modal-ia-resultado')">Cerrar</button></div>
+    `, { size: 'modal-lg' });
+  } catch (e) { showToast(e.message, 'err'); }
 }
 
 export function usarDatosIAInformePsico(id, datos) {
