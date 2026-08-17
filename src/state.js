@@ -2,7 +2,7 @@
 // Fuente de verdad: EXTRACCION_RRHH/05 (5.2, 5.5).
 
 export const APP = {
-  nombre: 'Sistema RRHH',
+  nombre: 'Gestia',
   subnombre: 'Gestión de personal y liquidación de sueldos',
   cliente: 'Cooperativa de limpieza',
 };

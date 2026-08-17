@@ -41,7 +41,7 @@ export function mostrarLogin() {
   layout.classList.add('hidden');
   screenLogin.innerHTML = `
     <div class="login-card">
-      <div class="logo">R</div>
+      <div class="logo">G</div>
       <h1>${esc(APP.nombre)}</h1>
       <p class="sub">${esc(APP.subnombre)}</p>
       <form id="form-login">

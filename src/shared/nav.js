@@ -71,7 +71,7 @@ export function construirMenu() {
     ...((u?.esSuperadmin || u?.perfil === 'RRHH') ? [{ label: 'Configuración', keys: ['config_form_postulacion', 'config_form_entrevista'] }] : []),
   ];
 
-  let html = '<div class="brand"><div class="logo">R</div><div>' + esc(APP.nombre) + '</div></div><div class="menu">';
+  let html = '<div class="brand"><div class="logo">G</div><div>' + esc(APP.nombre) + '</div></div><div class="menu">';
   for (const g of grupos) {
     const keys = g.keys.filter((k) => habilitados.includes(k));
     if (!keys.length) continue;
