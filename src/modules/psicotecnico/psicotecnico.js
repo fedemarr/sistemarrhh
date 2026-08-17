@@ -130,7 +130,6 @@ export function abrirNuevoPsico() {
           </div>
           <div class="field full"><label>Observaciones</label><textarea name="observaciones" rows="3"></textarea></div>
           <div class="field"><label>Informe psicotécnico (PDF/IMG)</label><input type="file" id="psico-informe" accept=".pdf,.jpg,.png" /></div>
-          <div class="field"><label>Evaluación prelaboral (PDF/IMG)</label><input type="file" id="psico-prelaboral" accept=".pdf,.jpg,.png" /></div>
         </div>
       </div>
       <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-psico')">Cancelar</button><button type="submit" class="btn">Guardar</button></div>
@@ -158,8 +157,6 @@ export function abrirNuevoPsico() {
       .then(async () => {
         const fInf = document.getElementById('psico-informe')?.files?.[0];
         if (fInf) await subirAdjunto({ etapa: 'psicotecnico', tipo: 'informe', refIdLocal: p.id, file: fInf }).catch(e => showToast(e.message, 'err'));
-        const fPre = document.getElementById('psico-prelaboral')?.files?.[0];
-        if (fPre) await subirAdjunto({ etapa: 'psicotecnico', tipo: 'prelaboral', refIdLocal: p.id, file: fPre }).catch(e => showToast(e.message, 'err'));
         cerrarModal('modal-psico'); showToast('Evaluación guardada', 'ok'); renderPsico();
       })
       .catch((e) => showToast(e.message, 'err'));
@@ -185,10 +182,7 @@ export function abrirGestionPsico(id) {
         </div>
         <div class="adjunto-box psico">
           <h4>🎙️ Informe psicotécnico</h4>
-          <div class="form-grid">
-            <div class="field"><label>Informe psicotécnico</label>${htmlAdjuntos('psicotecnico', 'informe', p.id)}<input type="file" id="psico-gest-informe" accept=".pdf,.jpg,.png" /></div>
-            <div class="field"><label>Evaluación prelaboral</label>${htmlAdjuntos('psicotecnico', 'prelaboral', p.id)}<input type="file" id="psico-gest-prelaboral" accept=".pdf,.jpg,.png" /></div>
-          </div>
+          <div class="field">${htmlAdjuntos('psicotecnico', 'informe', p.id)}<input type="file" id="psico-gest-informe" accept=".pdf,.jpg,.png" /></div>
           <button type="button" class="btn btn-secondary" onclick="analizarInformePsicoIA('${esc(String(p.id))}')">🤖 Analizar con IA</button>
         </div>
         <div class="grupo"><legend>Etapas (${ETAPAS_PSICO.filter((e) => e.obligatoria).map((e) => e.label).join(' y ')} obligatorias)</legend>
@@ -216,8 +210,6 @@ export function abrirGestionPsico(id) {
       .then(async () => {
         const fInf = document.getElementById('psico-gest-informe')?.files?.[0];
         if (fInf) await subirAdjunto({ etapa: 'psicotecnico', tipo: 'informe', refIdLocal: p.id, file: fInf }).catch(e => showToast(e.message, 'err'));
-        const fPre = document.getElementById('psico-gest-prelaboral')?.files?.[0];
-        if (fPre) await subirAdjunto({ etapa: 'psicotecnico', tipo: 'prelaboral', refIdLocal: p.id, file: fPre }).catch(e => showToast(e.message, 'err'));
         showToast('Etapas guardadas', 'ok'); abrirGestionPsico(p.id);
       })
       .catch((e) => showToast(e.message, 'err'));

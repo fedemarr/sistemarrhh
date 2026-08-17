@@ -3,7 +3,7 @@
 // Edge Function `crear-empresa` (usa service_role para crear el usuario de Auth).
 
 import { DB } from '../../state.js';
-import { getClient, supaSync, supaInit } from '../../shared/supabase.js';
+import { getClient, supaSync, supaInit, fnErrorMessage } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/modal.js';
 import { esc } from '../../shared/helpers.js';
 import { esSuperadmin } from '../../shared/auth.js';
@@ -72,8 +72,8 @@ export function abrirNuevaEmpresa() {
     btn.disabled = true;
     btn.textContent = 'Creando…';
     getClient().functions.invoke('crear-empresa', { body: datos })
-      .then(({ data, error }) => {
-        if (error) throw new Error(error.context?.message || error.message);
+      .then(async ({ data, error }) => {
+        if (error) throw new Error(await fnErrorMessage(error));
         if (data?.error) throw new Error(data.error);
         cerrarModal('modal-empresa');
         showToast(`Empresa creada: ${data.nombre || ''}`, 'ok');

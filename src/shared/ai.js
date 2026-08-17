@@ -5,7 +5,7 @@
 // análisis sale del contenido real del documento (fecha, resultado) y no
 // solo de los campos de texto del formulario.
 
-import { getClient } from './supabase.js';
+import { getClient, fnErrorMessage } from './supabase.js';
 
 // { etapa, tipo, refIdLocal } identifican el adjunto vigente a analizar
 // (mismos valores que se usaron al subirlo con subirAdjunto). `prompt` es
@@ -13,7 +13,7 @@ import { getClient } from './supabase.js';
 export async function analizarConGemini({ etapa, tipo, refIdLocal, prompt }) {
   const client = getClient();
   const { data, error } = await client.functions.invoke('analizar-ia', { body: { etapa, tipo, refIdLocal, prompt } });
-  if (error) throw new Error(error.context?.message || error.message);
+  if (error) throw new Error(await fnErrorMessage(error));
   if (data?.error) throw new Error(data.error);
   return data?.respuesta || 'Sin respuesta de la IA.';
 }

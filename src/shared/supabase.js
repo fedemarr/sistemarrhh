@@ -12,6 +12,20 @@ export const SUPABASE_ANON_KEY = ENV_KEY || process?.env?.VITE_SUPABASE_ANON_KEY
 
 let _client = null;
 
+// Extrae el mensaje real de un error de client.functions.invoke(). Cuando la
+// Edge Function responde con un status no-2xx, supabase-js arma un
+// FunctionsHttpError cuyo `.message` es SIEMPRE el texto genérico "Edge
+// Function returned a non-2xx status code" — el body real (con el {error:
+// "..."} que mandó la función) queda en `error.context`, que es la Response
+// cruda sin leer. Hay que parsearla para mostrar el mensaje de verdad.
+export async function fnErrorMessage(error) {
+  try {
+    const body = await error?.context?.clone?.().json();
+    if (body?.error) return body.error;
+  } catch { /* context no era JSON o ya se había leído */ }
+  return error?.message || 'Error desconocido';
+}
+
 export function hayConfigSupabase() {
   return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 }

@@ -4,7 +4,7 @@
 // siempre opera sobre la propia (la función valida el tenant server-side).
 
 import { DB, PERFILES } from '../../state.js';
-import { getClient, _toCamelRow } from '../../shared/supabase.js';
+import { getClient, _toCamelRow, fnErrorMessage } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/modal.js';
 import { esc } from '../../shared/helpers.js';
 import { getCurrentUser, esSuperadmin } from '../../shared/auth.js';
@@ -94,7 +94,7 @@ export function abrirNuevoUsuarioEmpresa() {
       const { data, error } = await client.functions.invoke('gestionar-usuario', {
         body: { action: 'create', ...datos },
       });
-      if (error) throw new Error(error.context?.message || error.message);
+      if (error) throw new Error(await fnErrorMessage(error));
       if (data?.error) throw new Error(data.error);
 
       cerrarModal('modal-nuevo-usuario-empresa');
@@ -150,7 +150,7 @@ export function editarUsuarioEmpresa(id) {
       const { data, error } = await client.functions.invoke('gestionar-usuario', {
         body: { action: 'update', userId: id, ...datos },
       });
-      if (error) throw new Error(error.context?.message || error.message);
+      if (error) throw new Error(await fnErrorMessage(error));
       if (data?.error) throw new Error(data.error);
 
       Object.assign(u, datos);
@@ -192,7 +192,7 @@ export function resetPasswordEmpresa(id) {
       const { data, error } = await client.functions.invoke('gestionar-usuario', {
         body: { action: 'resetPassword', userId: id, password: datos.password },
       });
-      if (error) throw new Error(error.context?.message || error.message);
+      if (error) throw new Error(await fnErrorMessage(error));
       if (data?.error) throw new Error(data.error);
 
       cerrarModal('modal-reset-pass-empresa');
@@ -211,8 +211,8 @@ export function toggleActivoUsuarioEmpresa(id) {
 
   getClient().functions.invoke('gestionar-usuario', {
     body: { action: 'update', userId: id, activo: nuevoEstado },
-  }).then(({ data, error }) => {
-    if (error) throw new Error(error.context?.message || error.message);
+  }).then(async ({ data, error }) => {
+    if (error) throw new Error(await fnErrorMessage(error));
     if (data?.error) throw new Error(data.error);
     u.activo = nuevoEstado;
     showToast(nuevoEstado ? 'Usuario activado' : 'Usuario desactivado', 'ok');
@@ -228,8 +228,8 @@ export function eliminarUsuarioEmpresa(id) {
 
   getClient().functions.invoke('gestionar-usuario', {
     body: { action: 'delete', userId: id },
-  }).then(({ data, error }) => {
-    if (error) throw new Error(error.context?.message || error.message);
+  }).then(async ({ data, error }) => {
+    if (error) throw new Error(await fnErrorMessage(error));
     if (data?.error) throw new Error(data.error);
 
     const idx = DB.usuarios.findIndex((x) => String(x.id) === String(id));

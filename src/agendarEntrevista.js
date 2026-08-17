@@ -6,7 +6,7 @@
 // candidatos/turnos directo desde el navegador, así no se filtran nombres de
 // otros postulantes a un desconocido que abre el link.
 
-import { getPublicClient, hayConfigSupabase } from './shared/supabase.js';
+import { getPublicClient, hayConfigSupabase, fnErrorMessage } from './shared/supabase.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -140,7 +140,7 @@ async function enviar(empresaId) {
         observaciones: (datos.observaciones || '').trim(),
       },
     });
-    if (error) throw new Error(error.context?.message || error.message);
+    if (error) throw new Error(await fnErrorMessage(error));
     if (data?.error) throw new Error(data.error);
     mostrarEstado(true, `¡Turno confirmado para el ${_slotElegido.fecha} a las ${_slotElegido.hora}! Te esperamos.`);
     form.reset();
@@ -157,7 +157,7 @@ async function cargarDisponibilidad(empresaId) {
   const { data, error } = await client.functions.invoke('agendar-turno', {
     body: { action: 'disponibilidad', empresaId, dias: 14 },
   });
-  if (error) throw new Error(error.context?.message || error.message);
+  if (error) throw new Error(await fnErrorMessage(error));
   if (data?.error) throw new Error(data.error);
   return data;
 }

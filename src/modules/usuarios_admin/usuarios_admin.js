@@ -1,7 +1,7 @@
 // Usuarios — gestión de usuarios por superadmin (CRUD vía Edge Function).
 
 import { DB, PERFILES } from '../../state.js';
-import { getClient, _toCamelRow } from '../../shared/supabase.js';
+import { getClient, _toCamelRow, fnErrorMessage } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/modal.js';
 import { esc } from '../../shared/helpers.js';
 import { esSuperadmin } from '../../shared/auth.js';
@@ -106,7 +106,7 @@ export function abrirNuevoUsuario() {
       const { data, error } = await client.functions.invoke('gestionar-usuario', {
         body: { action: 'create', ...datos, empresaId },
       });
-      if (error) throw new Error(error.context?.message || error.message);
+      if (error) throw new Error(await fnErrorMessage(error));
       if (data?.error) throw new Error(data.error);
 
       cerrarModal('modal-nuevo-usuario');
@@ -164,7 +164,7 @@ export function editarUsuario(id) {
       const { data, error } = await client.functions.invoke('gestionar-usuario', {
         body: { action: 'update', userId: id, ...datos },
       });
-      if (error) throw new Error(error.context?.message || error.message);
+      if (error) throw new Error(await fnErrorMessage(error));
       if (data?.error) throw new Error(data.error);
 
       // Actualizar en memoria
@@ -206,7 +206,7 @@ export function resetPassword(id) {
       const { data, error } = await client.functions.invoke('gestionar-usuario', {
         body: { action: 'resetPassword', userId: id, password: datos.password },
       });
-      if (error) throw new Error(error.context?.message || error.message);
+      if (error) throw new Error(await fnErrorMessage(error));
       if (data?.error) throw new Error(data.error);
 
       cerrarModal('modal-reset-pass');
@@ -224,8 +224,8 @@ export function toggleActivoUsuario(id) {
 
   getClient().functions.invoke('gestionar-usuario', {
     body: { action: 'update', userId: id, activo: nuevoEstado },
-  }).then(({ data, error }) => {
-    if (error) throw new Error(error.context?.message || error.message);
+  }).then(async ({ data, error }) => {
+    if (error) throw new Error(await fnErrorMessage(error));
     if (data?.error) throw new Error(data.error);
     u.activo = nuevoEstado;
     showToast(nuevoEstado ? 'Usuario activado' : 'Usuario desactivado', 'ok');
@@ -240,8 +240,8 @@ export function eliminarUsuario(id) {
 
   getClient().functions.invoke('gestionar-usuario', {
     body: { action: 'delete', userId: id },
-  }).then(({ data, error }) => {
-    if (error) throw new Error(error.context?.message || error.message);
+  }).then(async ({ data, error }) => {
+    if (error) throw new Error(await fnErrorMessage(error));
     if (data?.error) throw new Error(data.error);
 
     // Quitar de memoria
