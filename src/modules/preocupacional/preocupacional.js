@@ -21,8 +21,10 @@ export function getPreocupById(id) {
   return (DB.preocupacionales || []).find((p) => String(p.id) === String(id));
 }
 
+let _verPreocup = 'activos';
+
 function preocupFiltrados() {
-  const ver = document.getElementById('preocup-ver')?.value || 'activos';
+  const ver = _verPreocup;
   const buscar = document.getElementById('preocup-buscar')?.value || '';
   return (DB.preocupacionales || [])
     .filter((p) => (ver === 'activos' ? p.estado !== 'Rechazado' && !p.anulado : p.estado === 'Rechazado' || p.anulado))
@@ -51,8 +53,8 @@ export function renderPreocup() {
       <div class="stat"><div class="num">${stats.conDocum}</div><div class="lbl">Con documentación activa</div></div>
     </div>
     <div class="toolbar">
-      <button class="btn btn-secondary" onclick="tabPreocup('activos')">Activos</button>
-      <button class="btn btn-secondary" onclick="tabPreocup('historico')">Histórico</button>
+      <button class="btn ${_verPreocup === 'activos' ? '' : 'btn-secondary'}" onclick="tabPreocup('activos')">Activos</button>
+      <button class="btn ${_verPreocup === 'historico' ? '' : 'btn-secondary'}" onclick="tabPreocup('historico')">Histórico</button>
       <input type="text" id="preocup-buscar" placeholder="Buscar por DNI / nombre…" value="${esc(buscar)}" oninput="filtrarPreocup()" />
       <div class="spacer"></div>
       <button class="btn" onclick="abrirNuevoPreocup()">+ Nuevo examen</button>
@@ -66,8 +68,7 @@ export function renderPreocup() {
 }
 
 export function tabPreocup(ver) {
-  const cont = document.getElementById('screen-preocupacional');
-  cont.dataset.ver = ver;
+  _verPreocup = ver;
   renderPreocup();
 }
 

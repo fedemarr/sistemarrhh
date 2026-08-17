@@ -25,9 +25,11 @@ export function getPsicoById(id) {
   return (DB.psicos || []).find((p) => String(p.id) === String(id));
 }
 
+let _verPsico = 'activos';
+
 export function renderPsico() {
   const cont = document.getElementById('screen-psicotecnico');
-  const ver = document.getElementById('psico-ver')?.value || 'activos';
+  const ver = _verPsico;
   const buscar = document.getElementById('psico-buscar')?.value || '';
 
   const lista = (DB.psicos || [])
@@ -59,9 +61,9 @@ export function renderPsico() {
       <div class="stat"><div class="num">${stats.ingresados}</div><div class="lbl">Con alta completada</div></div>
     </div>
     <div class="toolbar">
-      <button class="btn btn-secondary" onclick="tabPsico('activos')">Activos</button>
-      <button class="btn btn-secondary" onclick="tabPsico('ingresados')">Ya ingresados</button>
-      <button class="btn btn-secondary" onclick="tabPsico('historico')">Histórico</button>
+      <button class="btn ${ver === 'activos' ? '' : 'btn-secondary'}" onclick="tabPsico('activos')">Activos</button>
+      <button class="btn ${ver === 'ingresados' ? '' : 'btn-secondary'}" onclick="tabPsico('ingresados')">Ya ingresados</button>
+      <button class="btn ${ver === 'historico' ? '' : 'btn-secondary'}" onclick="tabPsico('historico')">Histórico</button>
       <input type="text" id="psico-buscar" placeholder="Buscar por DNI / nombre…" value="${esc(buscar)}" oninput="renderPsico()" />
       <div class="spacer"></div>
       <button class="btn" onclick="abrirNuevoPsico()">+ Nueva evaluación</button>
@@ -75,8 +77,7 @@ export function renderPsico() {
 }
 
 export function tabPsico(ver) {
-  const cont = document.getElementById('screen-psicotecnico');
-  cont.dataset.ver = ver;
+  _verPsico = ver;
   renderPsico();
 }
 

@@ -46,9 +46,11 @@ export function tabCandPrincipal(tab) {
   else renderCandidatos();
 }
 
+let _verCandidatos = 'activos';
+
 export function renderCandidatos() {
   const cont = document.getElementById('cand-contenido');
-  const ver = document.getElementById('cand-ver')?.value || 'activos';
+  const ver = _verCandidatos;
   const buscar = document.getElementById('cand-buscar')?.value || '';
   const fZona = document.getElementById('cand-filtro-zona')?.value || '';
   const fEstado = document.getElementById('cand-filtro-estado')?.value || '';
@@ -67,8 +69,8 @@ export function renderCandidatos() {
 
   cont.innerHTML = `
     <div class="toolbar">
-      <button class="btn btn-secondary ${ver === 'activos' ? '' : ''}" onclick="toggleVerCandidatos('activos')">Activos (${base.filter((c) => !esHistoricoCand(c)).length})</button>
-      <button class="btn btn-secondary" onclick="toggleVerCandidatos('historico')">Histórico (${base.filter((c) => esHistoricoCand(c)).length})</button>
+      <button class="btn ${ver === 'activos' ? '' : 'btn-secondary'}" onclick="toggleVerCandidatos('activos')">Activos (${base.filter((c) => !esHistoricoCand(c)).length})</button>
+      <button class="btn ${ver === 'historico' ? '' : 'btn-secondary'}" onclick="toggleVerCandidatos('historico')">Histórico (${base.filter((c) => esHistoricoCand(c)).length})</button>
       <input type="text" id="cand-buscar" placeholder="Buscar apellido / DNI…" value="${esc(buscar)}" oninput="renderCandidatos()" />
       <select id="cand-filtro-zona" onchange="renderCandidatos()">
         <option value="">Zona: todas</option>
@@ -90,8 +92,7 @@ export function renderCandidatos() {
 }
 
 export function toggleVerCandidatos(ver) {
-  const cont = document.getElementById('cand-contenido');
-  cont.dataset.ver = ver;
+  _verCandidatos = ver;
   renderCandidatos();
 }
 

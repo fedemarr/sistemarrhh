@@ -37,8 +37,10 @@ export function _crearAltaDesdeDocum(d) {
   return true;
 }
 
+let _verDocum = 'activos';
+
 function documFiltrados() {
-  const ver = document.getElementById('docum-ver')?.value || 'activos';
+  const ver = _verDocum;
   const buscar = document.getElementById('docum-buscar')?.value || '';
   return (DB.documentacionIngreso || [])
     .filter((d) => (ver === 'activos' ? !d.anulado && d.estado !== 'Rechazado' : d.anulado || d.estado === 'Rechazado'))
@@ -67,8 +69,8 @@ export function renderDocum() {
       <div class="stat"><div class="num">${stats.rechazados}</div><div class="lbl">Rechazados / anulados</div></div>
     </div>
     <div class="toolbar">
-      <button class="btn btn-secondary" onclick="tabDocum('activos')">Activos</button>
-      <button class="btn btn-secondary" onclick="tabDocum('historico')">Histórico</button>
+      <button class="btn ${_verDocum === 'activos' ? '' : 'btn-secondary'}" onclick="tabDocum('activos')">Activos</button>
+      <button class="btn ${_verDocum === 'historico' ? '' : 'btn-secondary'}" onclick="tabDocum('historico')">Histórico</button>
       <input type="text" id="docum-buscar" placeholder="Buscar por DNI / nombre…" value="${esc(buscar)}" oninput="filtrarDocum()" />
       <div class="spacer"></div>
       <button class="btn" onclick="abrirNuevaDocum()">+ Nueva documentación</button>
@@ -82,8 +84,7 @@ export function renderDocum() {
 }
 
 export function tabDocum(ver) {
-  const cont = document.getElementById('screen-documentacion');
-  cont.dataset.ver = ver;
+  _verDocum = ver;
   renderDocum();
 }
 

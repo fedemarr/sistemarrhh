@@ -83,6 +83,7 @@ function filaAlta(a) {
     <td class="acciones">
       <button class="btn" onclick="abrirModalAlta('${esc(String(a.id))}')">Completar alta</button>
       <button class="btn btn-secondary btn-sm" onclick="rechazarAlta('${esc(String(a.id))}')">Baja</button>
+      <button class="btn btn-danger btn-sm" onclick="deshacerAlta('${esc(String(a.id))}')">↩ Deshacer todo</button>
     </td>
   </tr>`;
 }
@@ -93,6 +94,50 @@ export function rechazarAlta(id) {
   a.estado = 'Alta rechazada';
   supaSync('catAltPendientes', a)
     .then(() => { showToast('Alta rechazada', 'warn'); renderAltas(); })
+    .catch((e) => showToast(e.message, 'err'));
+}
+
+// "Deshacer todo": revierte el proceso completo hasta el punto de partida
+// (vuelve a Candidatos, pestaña Activos) en vez de solo rechazar el alta.
+//  - Si vino de Psicotécnico (a.psicoId): esa evaluación pasa a Rechazado
+//    (con nota), para que no siga bloqueando un nuevo intento.
+//  - El candidato original vuelve a estado 'Aprobado' (el que tenía antes
+//    de pasar a Psicotécnico), así reaparece en Candidatos > Activos.
+//  - Este registro de alta pendiente se marca 'Deshecho' (no se borra, para
+//    no perder rastro de que existió).
+// Nota: si el alta vino de Documentación (a.creadoDesde === 'documentacion')
+// no hay forma de rastrear ese expediente puntual desde acá (catAltPendientes
+// no guarda su id), así que esa parte no se revierte automáticamente — hay
+// que revisarla manualmente en Documentación si hace falta.
+export function deshacerAlta(id) {
+  const a = getAltById(id);
+  if (!a) return;
+  if (!confirm(`¿Deshacer todo el proceso de alta de ${a.nombre || a.dni}? Vuelve a Candidatos y se pierde el avance de Psicotécnico.`)) return;
+
+  const tareas = [];
+
+  if (a.psicoId) {
+    const psico = (DB.psicos || []).find((p) => String(p.id) === String(a.psicoId));
+    if (psico && psico.estado !== 'Rechazado') {
+      psico.estado = 'Rechazado';
+      psico.observaciones = (psico.observaciones ? psico.observaciones + ' ' : '') + '[Deshecho desde Altas]';
+      tareas.push(supaSync('psicos', psico));
+    }
+  }
+
+  if (a.candidatoId) {
+    const c = (DB.candidatos || []).find((x) => String(x.id) === String(a.candidatoId));
+    if (c && c.estado !== 'Rechazado' && c.estado !== 'Baja') {
+      c.estado = 'Aprobado';
+      tareas.push(supaSync('candidatos', c));
+    }
+  }
+
+  a.estado = 'Deshecho';
+  tareas.push(supaSync('catAltPendientes', a));
+
+  Promise.all(tareas)
+    .then(() => { showToast('Alta deshecha — el candidato vuelve a Candidatos', 'ok'); renderAltas(); })
     .catch((e) => showToast(e.message, 'err'));
 }
 

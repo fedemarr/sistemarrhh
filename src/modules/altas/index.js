@@ -2,7 +2,7 @@
 
 export * from './altas.js';
 
-import { renderAltas, filtrarAltas, abrirModalAlta, abrirAltaVacia, rechazarAlta, confirmarAlta, tabAlta, tabAltaSiguiente, tabAltaAnterior, onChangeZonaAlta, onChangePartidoAlta, onChangeLocalidadAlta, onChangeServicioAlta, toggleReingresante, buscarLegajoReingresante, agregarFilaPoliza, eliminarFilaPoliza, leerPolizas, renderPolizas, recalcularInicioObraSocial, poblarSelectsAltas, integracionSugerida } from './altas.js';
+import { renderAltas, filtrarAltas, abrirModalAlta, abrirAltaVacia, rechazarAlta, deshacerAlta, confirmarAlta, tabAlta, tabAltaSiguiente, tabAltaAnterior, onChangeZonaAlta, onChangePartidoAlta, onChangeLocalidadAlta, onChangeServicioAlta, toggleReingresante, buscarLegajoReingresante, agregarFilaPoliza, eliminarFilaPoliza, leerPolizas, renderPolizas, recalcularInicioObraSocial, poblarSelectsAltas, integracionSugerida } from './altas.js';
 
 export const altasScreenConfig = {
   altas: {
@@ -18,6 +18,7 @@ window.filtrarAltas = filtrarAltas;
 window.abrirModalAlta = abrirModalAlta;
 window.abrirAltaVacia = abrirAltaVacia;
 window.rechazarAlta = rechazarAlta;
+window.deshacerAlta = deshacerAlta;
 window.confirmarAlta = confirmarAlta;
 window.tabAlta = tabAlta;
 window.tabAltaSiguiente = tabAltaSiguiente;
