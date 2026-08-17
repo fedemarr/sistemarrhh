@@ -75,9 +75,9 @@ export function renderCandidatos() {
     </div>
     <div class="tbl-wrap">
       <table class="tbl">
-        <thead><tr><th>Apellido</th><th>Nombre</th><th>DNI</th><th>Tel</th><th>Zona</th><th>Estado</th><th>Cita</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Apellido</th><th>Nombre</th><th>DNI</th><th>Edad</th><th>Tel</th><th>Zona</th><th>Estado</th><th>Cita</th><th>Acciones</th></tr></thead>
         <tbody>
-          ${lista.length ? lista.map(filaCandidato).join('') : '<tr><td colspan="8" class="empty">Sin candidatos.</td></tr>'}
+          ${lista.length ? lista.map(filaCandidato).join('') : '<tr><td colspan="9" class="empty">Sin candidatos.</td></tr>'}
         </tbody>
       </table>
     </div>`;
@@ -96,10 +96,12 @@ function chipEstadoCand(e) {
 
 function filaCandidato(c) {
   const acciones = accionesCandidato(c);
+  const edad = c.fecNac ? calcularEdad(c.fecNac) : null;
   return `<tr>
     <td>${esc(c.apellido || '')}</td>
     <td>${esc(c.nombre || '')}</td>
     <td>${esc(c.dni || '')}</td>
+    <td>${edad ?? '—'}</td>
     <td>${esc(c.telefono || c.tel || '')}</td>
     <td>${esc(c.zona || '')}</td>
     <td>${chipEstadoCand(c.estado)}</td>
@@ -475,7 +477,7 @@ export function renderLinkPublico(container) {
   container.innerHTML = `
     <div class="card" style="max-width:720px">
       <h3>Link público de postulación</h3>
-      <p>Compartí este enlace para que los postulantes carguen sus datos directamente (se crean como candidatos con estado "Sin citar").</p>
+      <p>Compartí este enlace para que los postulantes carguen sus datos directamente (entran como "Pre-candidato" a la pestaña Pre-candidatos, para que los revises antes de que sigan el flujo).</p>
       <div class="toolbar">
         <input type="text" readonly value="${esc(link)}" style="flex:1;font-family:Consolas,monospace" />
         <button class="btn" onclick="copiarLinkPostulacion()">Copiar</button>
@@ -494,36 +496,45 @@ export function copiarLinkPostulacion() {
 export function renderPrecandidatos() {
   const cont = document.getElementById('cand-contenido');
   const buscar = document.getElementById('cand-buscar-pre')?.value || '';
-  const lista = (DB.candidatos || [])
-    .filter((c) => c.estado === 'Precandidato')
+  const fZona = document.getElementById('cand-filtro-zona-pre')?.value || '';
+  const todos = (DB.candidatos || []).filter((c) => c.estado === 'Precandidato');
+  const lista = todos
     .filter((c) => !buscar || [c.apellido, c.nombre, c.dni, c.telefono].some((v) => String(v || '').toLowerCase().includes(buscar.toLowerCase())))
+    .filter((c) => !fZona || c.zona === fZona)
     .sort((a, b) => String(b.id).localeCompare(String(a.id)));
 
   cont.innerHTML = `
     <div class="toolbar">
       <input type="text" id="cand-buscar-pre" placeholder="Buscar apellido / DNI…" value="${esc(buscar)}" oninput="renderPrecandidatos()" />
+      <select id="cand-filtro-zona-pre" onchange="renderPrecandidatos()">
+        <option value="">Zona: todas</option>
+        ${[...new Set(todos.map((c) => c.zona).filter(Boolean))].map((z) => `<option ${fZona === z ? 'selected' : ''}>${esc(z)}</option>`).join('')}
+      </select>
       <span class="muted">${lista.length} precandidato(s)</span>
     </div>
     <div class="tbl-wrap">
       <table class="tbl">
-        <thead><tr><th>Apellido</th><th>Nombre</th><th>DNI</th><th>Tel</th><th>Zona</th><th>Medio</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Apellido</th><th>Nombre</th><th>DNI</th><th>Edad</th><th>Tel</th><th>Zona</th><th>Medio</th><th>Acciones</th></tr></thead>
         <tbody>
-          ${lista.length ? lista.map(filaPrecandidato).join('') : '<tr><td colspan="7" class="empty">Sin precandidatos pendientes.</td></tr>'}
+          ${lista.length ? lista.map(filaPrecandidato).join('') : '<tr><td colspan="8" class="empty">Sin precandidatos pendientes.</td></tr>'}
         </tbody>
       </table>
     </div>`;
 }
 
 function filaPrecandidato(c) {
+  const edad = c.fecNac ? calcularEdad(c.fecNac) : null;
   return `<tr>
     <td>${esc(c.apellido || '')}</td>
     <td>${esc(c.nombre || '')}</td>
     <td>${esc(c.dni || '')}</td>
+    <td>${edad ?? '—'}</td>
     <td>${esc(c.telefono || c.tel || '')}</td>
     <td>${esc(c.zona || '')}</td>
     <td>${esc(c.medio || '')}</td>
     <td class="acciones">
       <button class="btn btn-success btn-sm" onclick="aprobarPrecandidato('${esc(String(c.id))}')">Aprobar</button>
+      <button class="btn btn-secondary btn-sm" onclick="abrirMensajeEntrevista('${esc(String(c.id))}')">Enviar link entrevista</button>
       <button class="btn btn-danger btn-sm" onclick="rechazarPrecandidato('${esc(String(c.id))}')">Rechazar</button>
       <button class="btn btn-secondary btn-sm" onclick="abrirDetalleCandidatoPorId('${esc(String(c.id))}')">Ver</button>
     </td>

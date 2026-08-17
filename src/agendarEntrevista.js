@@ -79,7 +79,8 @@ async function enviar(campos) {
   try {
     const candidato = {
       id: Date.now().toString(),
-      nombre: `${nombre} ${apellido}`,
+      nombre,
+      apellido,
       dni,
       telefono: (datos.telefono || '').trim(),
       email: (datos.email || '').trim(),

@@ -15,10 +15,11 @@ const DEFAULT_CAMPOS = [
   { key: 'dni', label: 'DNI', type: 'text', required: true, order: 3 },
   { key: 'email', label: 'Email', type: 'email', required: false, order: 4 },
   { key: 'telefono', label: 'Teléfono', type: 'tel', required: false, order: 5 },
-  { key: 'fechaNacimiento', label: 'Fecha de nacimiento', type: 'date', required: false, order: 6 },
-  { key: 'servicioDeseado', label: 'Servicio deseado', type: 'text', required: false, order: 7 },
-  { key: 'disponibilidad', label: 'Disponibilidad', type: 'select', required: false, options: 'Full time,Part time,Solo mañanas,Solo tardes', order: 8 },
-  { key: 'experiencia', label: 'Experiencia', type: 'textarea', required: false, order: 9 },
+  { key: 'fecNac', label: 'Fecha de nacimiento', type: 'date', required: false, order: 6 },
+  { key: 'zona', label: 'Zona / Localidad', type: 'text', required: false, order: 7 },
+  { key: 'servicioDeseado', label: 'Servicio deseado', type: 'text', required: false, order: 8 },
+  { key: 'disponibilidad', label: 'Disponibilidad', type: 'select', required: false, options: 'Full time,Part time,Solo mañanas,Solo tardes', order: 9 },
+  { key: 'experiencia', label: 'Experiencia', type: 'textarea', required: false, order: 10 },
 ];
 
 function renderCampo(c) {
@@ -82,15 +83,19 @@ async function enviar() {
 
     const candidato = {
       id: Date.now().toString(),
-      nombre: `${nombre} ${apellido}`,
+      nombre,
+      apellido,
       dni,
       telefono: (datos.telefono || '').trim(),
       email: (datos.email || '').trim(),
-      fechaNacimiento: datos.fechaNacimiento || '',
+      fecNac: datos.fecNac || '',
+      zona: (datos.zona || '').trim(),
       servicioDeseado: (datos.servicioDeseado || '').trim(),
       disponibilidad: datos.disponibilidad || '',
       experiencia: (datos.experiencia || '').trim(),
-      estado: 'Sin citar',
+      // Entra como Precandidato: alguien de RRHH lo revisa y lo aprueba/rechaza
+      // desde la pestaña "Pre-candidatos" antes de que entre al flujo normal.
+      estado: 'Precandidato',
       fecha: new Date().toISOString(),
       origen: 'postularme',
     };
