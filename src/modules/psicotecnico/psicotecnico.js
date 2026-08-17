@@ -6,7 +6,7 @@ import { supaSync } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/modal.js';
 import { esc, fechaISOToDisplay } from '../../shared/helpers.js';
 import { getCurrentUser } from '../../shared/auth.js';
-import { getGeminiKey, analizarConGemini } from '../../shared/ai.js';
+import { analizarConGemini } from '../../shared/ai.js';
 import { subirAdjunto, htmlAdjuntos, verAdjunto } from '../../shared/adjuntos.js';
 
 export const RESULTADOS_PSICO = ['Pendiente', 'Apto+', 'Apto', 'Apto-', 'Apto condicional', 'No Apto'];
@@ -312,7 +312,6 @@ export function revertirPsico(id) {
 export async function analizarInformePsicoIA(id) {
   const p = getPsicoById(id);
   if (!p) return;
-  if (!getGeminiKey()) { showToast('Configure la API key de Gemini en Configuración IA.', 'warn'); return; }
   showToast('Analizando informe psicotécnico con IA…', 'warn');
   try {
     const etapas = p.etapas || {};

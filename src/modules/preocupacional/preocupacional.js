@@ -5,7 +5,7 @@ import { DB } from '../../state.js';
 import { supaSync } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/modal.js';
 import { esc, fechaISOToDisplay } from '../../shared/helpers.js';
-import { getGeminiKey, analizarConGemini } from '../../shared/ai.js';
+import { analizarConGemini } from '../../shared/ai.js';
 import { subirAdjunto, htmlAdjuntos, verAdjunto } from '../../shared/adjuntos.js';
 
 export const PRESTADORES = ['MEDE', 'Grupo CMC', 'IDT'];
@@ -274,7 +274,6 @@ export function bajaPreocup(id) {
 export async function analizarAptoMedicoIA(id) {
   const p = getPreocupById(id);
   if (!p) return;
-  if (!getGeminiKey()) { showToast('Configure la API key de Gemini en Configuración IA.', 'warn'); return; }
   showToast('Analizando apto médico con IA…', 'warn');
   try {
     const prompt = `Analiza este apto médico y determina si el candidato es apto o no apto para el trabajo. Fundamenta tu respuesta.\n\nDatos:\n- Nombre: ${p.nombre}\n- DNI: ${p.dni}\n- Prestador: ${p.prestador}\n- Fecha turno: ${p.fechaTurno}\n- Fecha resultado: ${p.fechaResultado}\n- Resultado: ${p.resultado}\n- Observaciones: ${p.observaciones || 'Sin observaciones'}`;

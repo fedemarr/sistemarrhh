@@ -4,7 +4,6 @@ import { SCREEN_CONFIG, APP, PERFILES } from '../state.js';
 import { getCurrentUser } from './auth.js';
 import { esc } from './helpers.js';
 import { ensureModal, cerrarModal, showToast } from './modal.js';
-import { getGeminiKey, setGeminiKey, analizarConGemini } from './ai.js';
 import { getClient } from './supabase.js';
 
 export function navTo(key) {
@@ -89,48 +88,8 @@ export function construirMenu() {
   html += '</div>';
   html += `<div class="sidebar-foot"><div class="sidebar-user">${esc(u?.nombre || '')}</div>`;
   html += `<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="abrirCambiarPassword()">Cambiar contraseña</button>`;
-  if (u && u.perfil === 'Administrador total') {
-    html += `<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="abrirConfigIA()">Configuración IA</button>`;
-  }
   html += `<button class="btn-logout" onclick="cerrarSesion()">Cerrar sesión</button></div>`;
   sb.innerHTML = html;
-}
-
-export function abrirConfigIA() {
-  const key = getGeminiKey();
-  ensureModal('modal-config-ia', `
-    <div class="modal-head"><h2>Configuración IA — Gemini</h2><button class="modal-close" onclick="cerrarModal('modal-config-ia')">×</button></div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="field full"><label>API Key de Google Gemini</label>
-          <input type="password" id="config-ia-key" value="${esc(key)}" placeholder="AIzaSy..." />
-        </div>
-      </div>
-      <p class="muted">Obtené tu key en <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>. Se guarda en el navegador (localStorage).</p>
-    </div>
-    <div class="modal-foot">
-      <button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-config-ia')">Cancelar</button>
-      <button type="button" class="btn btn-warning" onclick="probarConfigIA()">Probar conexión</button>
-      <button type="button" class="btn" onclick="guardarConfigIA()">Guardar</button>
-    </div>
-  `, {});
-}
-
-export function guardarConfigIA() {
-  const val = document.getElementById('config-ia-key')?.value?.trim() || '';
-  setGeminiKey(val);
-  showToast('API key guardada', 'ok');
-  cerrarModal('modal-config-ia');
-}
-
-export async function probarConfigIA() {
-  const val = document.getElementById('config-ia-key')?.value?.trim() || '';
-  if (!val) { showToast('Ingresá una API key', 'err'); return; }
-  setGeminiKey(val);
-  try {
-    const res = await analizarConGemini('Respondé solo: OK');
-    showToast('Conexión exitosa: ' + res.slice(0, 60), 'ok');
-  } catch (e) { showToast('Error: ' + e.message, 'err'); }
 }
 
 export function abrirCambiarPassword() {

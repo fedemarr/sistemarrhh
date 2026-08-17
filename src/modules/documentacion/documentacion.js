@@ -5,7 +5,7 @@ import { DB } from '../../state.js';
 import { supaSync } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/modal.js';
 import { esc, fechaISOToDisplay, calcularEstadoVencimiento } from '../../shared/helpers.js';
-import { getGeminiKey, analizarConGemini } from '../../shared/ai.js';
+import { analizarConGemini } from '../../shared/ai.js';
 import { subirAdjunto, htmlAdjuntos, verAdjunto } from '../../shared/adjuntos.js';
 
 export { calcularEstadoVencimiento };
@@ -341,7 +341,6 @@ export function revertirDocum(id) {
 export async function analizarAntecedentesIA(id) {
   const d = getDocumById(id);
   if (!d) return;
-  if (!getGeminiKey()) { showToast('Configure la API key de Gemini en Configuración IA.', 'warn'); return; }
   showToast('Analizando antecedentes con IA…', 'warn');
   try {
     const prompt = `Analiza estos antecedentes penales y documentación de ingreso. ¿Hay observaciones que impidan el alta?\n\nDatos:\n- Nombre: ${d.nombre}\n- DNI: ${d.dni}\n- Estado: ${d.estado}\n- Antecedentes vencimiento: ${d.antecVencimiento || 'Sin dato'}\n- Libreta aplica: ${d.libretaAplica ? 'Sí' : 'No'}\n- Libreta vencimiento: ${d.libretaVencimiento || 'Sin dato'}\n- Curso tiene: ${d.cursoTiene ? 'Sí' : 'No'}\n- Curso vencimiento: ${d.cursoVencimiento || 'Sin dato'}\n- Motivo: ${d.motivo || 'Sin motivo'}\n- Observaciones: ${d.observaciones || 'Sin observaciones'}`;
