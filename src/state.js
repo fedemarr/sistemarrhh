@@ -45,8 +45,8 @@ export function initDB() {
 // === Perfiles y menú por perfil ===
 export const PERFILES = {
   'Administrador total': {
-    modulos: ['empresas', 'dashboard_empresas', 'auditorias'],
-    desc: 'Superadmin: gestión de empresas, dashboard financiero y auditorías.',
+    modulos: ['empresas', 'usuarios_admin', 'dashboard_empresas', 'auditorias'],
+    desc: 'Superadmin: gestión de empresas, usuarios, dashboard financiero y auditorías.',
   },
   RRHH: {
     modulos: [

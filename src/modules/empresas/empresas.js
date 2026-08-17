@@ -60,9 +60,6 @@ export function abrirNuevaEmpresa() {
           <div class="field"><label>Dirección</label><input name="direccion" /></div>
           <div class="field"><label>Teléfono</label><input name="telefono" /></div>
           <div class="field"><label>Email de contacto</label><input type="email" name="emailContacto" /></div>
-          <div class="field"><label>Gmail del admin</label><input type="email" name="gmailUser" placeholder="admin@gmail.com" /></div>
-          <div class="field"><label>Contraseña de aplicación de Gmail</label><input type="password" name="gmailPass" placeholder="Contraseña de aplicación" /></div>
-          <div class="field"><label>Nombre remitente</label><input name="mailFromName" placeholder="(Usa el nombre de la empresa)" /></div>
         </div>
       </div>
       <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-empresa')">Cancelar</button><button type="submit" class="btn">Crear empresa</button></div>
@@ -81,18 +78,7 @@ export function abrirNuevaEmpresa() {
         cerrarModal('modal-empresa');
         showToast(`Empresa creada: ${data.nombre || ''}`, 'ok');
         showToast(`Admin: ${datos.email} / ${datos.password}`, 'ok');
-        return supaInit().then(async () => {
-          if (datos.gmailUser || datos.gmailPass) {
-            const nuevaEmpresa = (DB.empresas || []).find(e => e.nombre === datos.nombre);
-            if (nuevaEmpresa) {
-              nuevaEmpresa.gmailUser = datos.gmailUser || '';
-              nuevaEmpresa.gmailPass = datos.gmailPass || '';
-              nuevaEmpresa.mailFromName = datos.mailFromName || datos.nombre;
-              await supaSync('empresas', nuevaEmpresa);
-            }
-          }
-          renderEmpresas();
-        });
+        return supaInit().then(() => { renderEmpresas(); });
       })
       .catch((e) => showToast(e.message, 'err'))
       .finally(() => { if (document.getElementById('form-empresa')) { const b = document.getElementById('form-empresa').querySelector('button[type=submit]'); b.disabled = false; b.textContent = 'Crear empresa'; } });

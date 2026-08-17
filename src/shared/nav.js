@@ -5,6 +5,7 @@ import { getCurrentUser } from './auth.js';
 import { esc } from './helpers.js';
 import { ensureModal, cerrarModal, showToast } from './modal.js';
 import { getGeminiKey, setGeminiKey, analizarConGemini } from './ai.js';
+import { getClient } from './supabase.js';
 
 export function navTo(key) {
   if (!SCREEN_CONFIG[key]) return;
@@ -66,7 +67,7 @@ export function construirMenu() {
     { label: 'Liquidación', keys: ['categorias', 'smvm', 'liquidacion_horas', 'liq_admin', 'mantenimiento', 'retenes', 'liquidaciones', 'monotributos', 'retenciones', 'descuentos', 'paritarias', 'feriados'] },
     { label: 'Adelantos', keys: ['pedidos_adelantos', 'gestion_adelantos', 'mis_adelantos'] },
     { label: 'Transversales', keys: ['sugerencias', 'comunicaciones'] },
-    ...(u?.esSuperadmin ? [{ label: 'Administración', keys: ['empresas', 'dashboard_empresas', 'auditorias'] }] : []),
+    ...(u?.esSuperadmin ? [{ label: 'Administración', keys: ['empresas', 'usuarios_admin', 'dashboard_empresas', 'auditorias'] }] : []),
     ...((u?.esSuperadmin || u?.perfil === 'RRHH') ? [{ label: 'Configuración', keys: ['config_form_postulacion', 'config_form_entrevista'] }] : []),
   ];
 
@@ -81,6 +82,7 @@ export function construirMenu() {
   }
   html += '</div>';
   html += `<div class="sidebar-foot"><div class="sidebar-user">${esc(u?.nombre || '')}</div>`;
+  html += `<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="abrirCambiarPassword()">Cambiar contraseña</button>`;
   if (u && u.perfil === 'Administrador total') {
     html += `<button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px" onclick="abrirConfigIA()">Configuración IA</button>`;
   }
@@ -123,4 +125,35 @@ export async function probarConfigIA() {
     const res = await analizarConGemini('Respondé solo: OK');
     showToast('Conexión exitosa: ' + res.slice(0, 60), 'ok');
   } catch (e) { showToast('Error: ' + e.message, 'err'); }
+}
+
+export function abrirCambiarPassword() {
+  ensureModal('modal-cambiar-pass', `
+    <div class="modal-head"><h2>Cambiar contraseña</h2><button class="modal-close" onclick="cerrarModal('modal-cambiar-pass')">×</button></div>
+    <form id="form-cambiar-pass">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field full"><label>Nueva contraseña *</label><input type="password" name="nuevaPass" required minlength="6" placeholder="Mínimo 6 caracteres" /></div>
+          <div class="field full"><label>Repetir contraseña *</label><input type="password" name="repetirPass" required minlength="6" /></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-cambiar-pass')">Cancelar</button>
+        <button type="submit" class="btn">Guardar</button>
+      </div>
+    </form>`, {});
+
+  document.getElementById('form-cambiar-pass').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const pass = ev.target.elements.nuevaPass.value;
+    const pass2 = ev.target.elements.repetirPass.value;
+    if (pass !== pass2) { showToast('Las contraseñas no coinciden', 'err'); return; }
+    if (pass.length < 6) { showToast('Mínimo 6 caracteres', 'err'); return; }
+
+    const client = getClient();
+    const { error } = await client.auth.updateUser({ password: pass });
+    if (error) { showToast(error.message, 'err'); return; }
+    showToast('Contraseña actualizada', 'ok');
+    cerrarModal('modal-cambiar-pass');
+  });
 }
