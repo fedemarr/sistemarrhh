@@ -74,7 +74,7 @@ export function construirMenu() {
     { label: 'Adelantos', keys: ['pedidos_adelantos', 'gestion_adelantos', 'mis_adelantos'] },
     { label: 'Transversales', keys: ['sugerencias', 'comunicaciones'] },
     ...(u?.esSuperadmin ? [{ label: 'Administración', keys: ['empresas', 'usuarios_admin', 'dashboard_empresas', 'auditorias'] }] : []),
-    ...((u?.esSuperadmin || u?.perfil === 'RRHH' || u?.perfil === 'Administrador total') ? [{ label: 'Configuración', keys: ['config_form_postulacion', 'config_form_entrevista'] }] : []),
+    ...((u?.esSuperadmin || u?.perfil === 'RRHH' || u?.perfil === 'Administrador total') ? [{ label: 'Configuración', keys: ['config_form_postulacion', 'config_form_entrevista', 'usuarios_empresa'] }] : []),
   ];
 
   let html = '<div class="brand"><div class="logo">G</div><div>' + esc(APP.nombre) + '</div></div><div class="menu">';

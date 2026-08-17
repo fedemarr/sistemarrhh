@@ -25,6 +25,7 @@ import { auditoriasScreenConfig } from './auditorias/index.js';
 import { configFormsScreenConfig } from './config_forms/index.js';
 import { comunicacionesScreenConfig } from './comunicaciones/index.js';
 import { usuariosAdminScreenConfig } from './usuarios_admin/index.js';
+import { usuariosEmpresaScreenConfig } from './usuarios_empresa/index.js';
 
 export const moduleScreenConfigs = [
   pedidosScreenConfig,
@@ -52,4 +53,5 @@ export const moduleScreenConfigs = [
   configFormsScreenConfig,
   comunicacionesScreenConfig,
   usuariosAdminScreenConfig,
+  usuariosEmpresaScreenConfig,
 ];

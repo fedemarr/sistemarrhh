@@ -1,5 +1,9 @@
 // Edge Function: gestionar-usuario
-// CRUD de usuarios vía Auth + tabla usuarios. Solo superadmin.
+// CRUD de usuarios vía Auth + tabla usuarios.
+// Autorizados: superadmin (cualquier empresa) o el admin de una empresa
+// (perfil 'Administrador total', es_superadmin=false) SOLO sobre usuarios
+// de su propia empresa. El scoping de tenant se valida acá, server-side,
+// porque este handler usa el service_role y se salta las RLS.
 //
 // Deploy:
 //   supabase functions deploy gestionar-usuario
@@ -41,8 +45,21 @@ Deno.serve(async (req) => {
     const { data: { user } } = await supaAdmin.auth.getUser(jwt);
     if (!user) return json({ error: 'Sesión inválida' }, 401);
 
-    const { data: caller } = await supaAdmin.from('usuarios').select('es_superadmin').eq('id', user.id).maybeSingle();
-    if (!caller?.es_superadmin) return json({ error: 'Requiere superadmin' }, 403);
+    const { data: caller } = await supaAdmin.from('usuarios').select('es_superadmin, empresa_id, perfil').eq('id', user.id).maybeSingle();
+    const esSuper = Boolean(caller?.es_superadmin);
+    const esAdminEmpresa = !esSuper && caller?.perfil === 'Administrador total' && Boolean(caller?.empresa_id);
+    if (!esSuper && !esAdminEmpresa) return json({ error: 'Requiere superadmin o admin de empresa' }, 403);
+    const empresaCaller = caller?.empresa_id;
+
+    // Para acciones sobre un usuario existente: lo trae y verifica que un
+    // admin de empresa (no superadmin) solo pueda tocar gente de su propia
+    // empresa, y nunca a un superadmin.
+    async function targetEnAlcance(userId) {
+      if (esSuper) return true;
+      const { data: target } = await supaAdmin.from('usuarios').select('empresa_id, es_superadmin').eq('id', userId).maybeSingle();
+      if (!target || target.es_superadmin) return false;
+      return String(target.empresa_id) === String(empresaCaller);
+    }
 
     const body = await req.json().catch(() => ({}));
     const { action } = body;
@@ -53,7 +70,9 @@ Deno.serve(async (req) => {
       const nombre = String(body.nombre || '').trim();
       const perfil = String(body.perfil || '').trim();
       const nroSocio = body.nroSocio || null;
-      const empresaId = body.empresaId;
+      // El admin de empresa siempre crea dentro de su propia empresa,
+      // sin importar lo que mande el body.
+      const empresaId = esAdminEmpresa ? empresaCaller : body.empresaId;
 
       if (!email) return json({ error: 'Email obligatorio' }, 400);
       if (!nombre) return json({ error: 'Nombre obligatorio' }, 400);
@@ -93,6 +112,7 @@ Deno.serve(async (req) => {
       const activo = body.activo;
 
       if (!userId) return json({ error: 'userId requerido' }, 400);
+      if (!(await targetEnAlcance(userId))) return json({ error: 'No autorizado sobre este usuario' }, 403);
 
       const updates = {};
       if (nombre !== undefined) updates.nombre = nombre;
@@ -113,6 +133,7 @@ Deno.serve(async (req) => {
       const password = String(body.password || '');
 
       if (!userId) return json({ error: 'userId requerido' }, 400);
+      if (!(await targetEnAlcance(userId))) return json({ error: 'No autorizado sobre este usuario' }, 403);
       if (password.length < 6) return json({ error: 'La contraseña debe tener al menos 6 caracteres' }, 400);
 
       const { error } = await supaAdmin.auth.admin.updateUserById(userId, {
@@ -126,6 +147,7 @@ Deno.serve(async (req) => {
     if (action === 'delete') {
       const userId = body.userId;
       if (!userId) return json({ error: 'userId requerido' }, 400);
+      if (!(await targetEnAlcance(userId))) return json({ error: 'No autorizado sobre este usuario' }, 403);
 
       await silent(supaAdmin.from('usuarios').delete().eq('id', userId));
       await silent(supaAdmin.auth.admin.deleteUser(userId));

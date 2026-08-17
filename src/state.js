@@ -57,7 +57,7 @@ export const PERFILES = {
       'categorias', 'smvm', 'liquidacion_horas', 'liq_admin', 'mantenimiento', 'retenes', 'liquidaciones',
       'monotributos', 'retenciones', 'descuentos', 'paritarias', 'feriados',
       'pedidos_adelantos', 'gestion_adelantos', 'sugerencias', 'comunicaciones',
-      'config_form_postulacion', 'config_form_entrevista',
+      'config_form_postulacion', 'config_form_entrevista', 'usuarios_empresa',
     ],
     desc: 'Admin de empresa: acceso total a los módulos de su empresa (selección, personal, liquidación, adelantos, configuración).',
   },
