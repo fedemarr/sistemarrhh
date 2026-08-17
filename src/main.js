@@ -8,6 +8,7 @@ import { showToast, cerrarModal, ensureModal, capturar } from './shared/modal.js
 import { esc } from './shared/helpers.js';
 import { moduleScreenConfigs } from './modules/index.js';
 import { notificacionesPara } from './shared/notificaciones.js';
+import { verAdjunto } from './shared/adjuntos.js';
 
 initDB();
 registerScreens(moduleScreenConfigs);
@@ -17,6 +18,7 @@ window.cerrarModal = cerrarModal;
 window.ensureModal = ensureModal;
 window.showToast = showToast;
 window.capturar = capturar;
+window.verAdjunto = async (archivo) => { try { await verAdjunto(archivo); } catch (e) { showToast(e.message, 'err'); } };
 window.cerrarSesion = async () => {
   await logout();
   mostrarLogin();

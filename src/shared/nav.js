@@ -66,6 +66,7 @@ export function construirMenu() {
     { label: 'Liquidación', keys: ['categorias', 'smvm', 'liquidacion_horas', 'liq_admin', 'mantenimiento', 'retenes', 'liquidaciones', 'monotributos', 'retenciones', 'descuentos', 'paritarias', 'feriados'] },
     { label: 'Adelantos', keys: ['pedidos_adelantos', 'gestion_adelantos', 'mis_adelantos'] },
     { label: 'Transversales', keys: ['sugerencias'] },
+    ...(u?.esSuperadmin ? [{ label: 'Administración', keys: ['empresas'] }] : []),
   ];
 
   let html = '<div class="brand"><div class="logo">R</div><div>' + esc(APP.nombre) + '</div></div><div class="menu">';

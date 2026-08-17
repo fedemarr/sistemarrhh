@@ -7,6 +7,7 @@ import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/moda
 import { esc } from '../../shared/helpers.js';
 import { getCurrentUser } from '../../shared/auth.js';
 import { obtenerCategorias, calcularSalario, valorCategoria1, resumenPeriodo, obtenerHorasLiquidacion, redondear2 } from './liqUtils.js';
+import { descuentoTotalDe } from './descuentos.js';
 
 export const HS_MINIMO = 200;
 
@@ -32,6 +33,7 @@ export function renderLiquidacionHorasInicial(tab = 'borradores') {
     <div class="toolbar">
       <input type="text" id="buscar-liq-horas" placeholder="Buscar…" oninput="filtrarLiquidacionesHoras()" />
       <div class="spacer"></div>
+      <button class="btn btn-secondary" onclick="importarHorasCSV()">Importar CSV</button>
       <button class="btn" onclick="abrirNuevaLiquidacionHoras()">+ Nueva liquidación</button>
     </div>
     <div class="tbl-wrap"><table class="tbl">
@@ -179,7 +181,17 @@ export function guardarLiquidacionHoras(datos, l) {
   const categoria = datos.categoria || 'Categoría 1';
   const valorHora = obtenerValorHoraDe(categoria, datos.anio, datos.mes);
   const sueldoBruto = redondear2((Number(datos.horasTrabajadas) || 0) * valorHora);
-  const descuentosTotal = 0;
+  const descuentosDelSocio = descuentoTotalDe(datos.nroSocio);
+  const retenesAplicables = (DB.retenes || []).filter(r => r.activo !== false && r.porcentaje > 0);
+  const descRetenes = retenesAplicables.reduce((acc, r) => acc + (sueldoBruto * r.porcentaje / 100), 0);
+  const monotributo = (DB.monotributos || []).find(m => String(m.nroSocio) === String(datos.nroSocio) && m.anio === datos.anio && m.mes === datos.mes && m.estado !== 'Anulado');
+  const descMono = monotributo ? Number(monotributo.monto || 0) : 0;
+  const retGanancias = (DB.retenciones || []).filter(r => String(r.nroSocio) === String(datos.nroSocio) && r.tipo === 'Ganancias' && r.anio === datos.anio && r.mes === datos.mes && r.estado !== 'Anulado');
+  const descGanancias = retGanancias.reduce((acc, r) => acc + Number(r.monto || 0), 0);
+  const retIIBB = (DB.retenciones || []).filter(r => String(r.nroSocio) === String(datos.nroSocio) && r.tipo === 'IIBB' && r.anio === datos.anio && r.mes === datos.mes && r.estado !== 'Anulado');
+  const descIIBB = retIIBB.reduce((acc, r) => acc + Number(r.monto || 0), 0);
+  const descuentosTotal = redondear2(descuentosDelSocio + descRetenes + descMono + descGanancias + descIIBB);
+  const desgloseDescuentos = { descuentos: redondear2(descuentosDelSocio), retenes: redondear2(descRetenes), monotributo: redondear2(descMono), ganancias: redondear2(descGanancias), iibb: redondear2(descIIBB) };
   const datos2 = {
     nroSocio: Number(datos.nroSocio),
     nombreAsociado: datos.nombreAsociado || '',
@@ -191,6 +203,7 @@ export function guardarLiquidacionHoras(datos, l) {
     valorHora,
     sueldoBruto,
     descuentosTotal,
+    desgloseDescuentos,
     sueldoNeto: redondear2(sueldoBruto - descuentosTotal),
     observaciones: datos.observaciones || '',
   };
@@ -225,4 +238,131 @@ export function anularLiquidacionHorasPorId(id) {
   supaSync('liquidacionesHoras', l)
     .then(() => { showToast('Liquidación anulada', 'warn'); renderLiquidacionHorasInicial('anulados'); })
     .catch((e) => showToast(e.message, 'err'));
+}
+
+function parsearLineasCSV(texto) {
+  const lineas = texto.split(/\r?\n/).filter(l => l.trim());
+  if (lineas.length < 2) return [];
+  const headers = lineas[0].split(',').map(h => h.trim().replace(/^"|"$/g, '').toLowerCase());
+  const rows = [];
+  for (let i = 1; i < lineas.length; i++) {
+    const vals = lineas[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = vals[idx] || ''; });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function resolverCampo(row, ...candidatos) {
+  for (const c of candidatos) {
+    if (row[c] !== undefined && row[c] !== '') return row[c];
+  }
+  return '';
+}
+
+function limpiarNumero(v) {
+  return Number(String(v).replace(/[^\d.\-]/g, '')) || 0;
+}
+
+export function importarHorasCSV() {
+  ensureModal('modal-importar-csv', `
+    <div class="modal-head"><h2>Importar horas desde CSV</h2><button class="modal-close" onclick="cerrarModal('modal-importar-csv')">×</button></div>
+    <div class="modal-body">
+      <p class="muted">El CSV debe tener encabezados como: <code>nroSocio, horasTrabajadas, anio, mes</code> (también se aceptan variaciones como <code>fecDesde, fecHasta, hora</code>).</p>
+      <div class="field"><label>Archivo CSV</label><input type="file" id="csv-horas-input" accept=".csv" /></div>
+      <div id="csv-preview-container"></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-importar-csv')">Cancelar</button>
+      <button type="button" class="btn btn-success" id="csv-confirmar-btn" disabled>Confirmar importación</button>
+    </div>
+  `, { size: 'modal-lg' });
+
+  let filasParseadas = [];
+  const fileInput = document.getElementById('csv-horas-input');
+  const previewContainer = document.getElementById('csv-preview-container');
+  const confirmBtn = document.getElementById('csv-confirmar-btn');
+
+  fileInput.addEventListener('change', () => {
+    const archivo = fileInput.files[0];
+    if (!archivo) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      filasParseadas = parsearLineasCSV(ev.target.result);
+      if (!filasParseadas.length) {
+        previewContainer.innerHTML = '<p class="muted">No se encontraron filas válidas en el CSV.</p>';
+        confirmBtn.disabled = true;
+        return;
+      }
+      let html = `<p><strong>${filasParseadas.length}</strong> filas encontradas.</p>`;
+      html += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>N° Socio</th><th>Nombre</th><th>Horas</th><th>Periodo</th><th>Estado</th></tr></thead><tbody>';
+      for (const row of filasParseadas) {
+        const nro = resolverCampo(row, 'nroSocio', 'nro_socio', 'socio', 'legajo');
+        const horas = limpiarNumero(resolverCampo(row, 'horasTrabajadas', 'horas', 'hora', 'hs'));
+        const anio = limpiarNumero(resolverCampo(row, 'anio', 'año', 'year')) || new Date().getFullYear();
+        const mes = limpiarNumero(resolverCampo(row, 'mes', 'month')) || new Date().getMonth() + 1;
+        const leg = (DB.legajos || []).find(l => String(l.nro) === String(nro));
+        const nombre = leg?.nombre || resolverCampo(row, 'nombre', 'nombreAsociado', 'asociado') || '';
+        const fila = { nro, horas, anio, mes, nombre, error: !nro ? 'Falta N° socio' : horas <= 0 ? 'Horas inválidas' : '' };
+        Object.assign(row, fila);
+        html += `<tr>
+          <td>${esc(String(nro))}</td>
+          <td>${esc(nombre)}</td>
+          <td>${horas}</td>
+          <td>${String(mes).padStart(2, '0')}/${anio}</td>
+          <td>${fila.error ? '<span class="chip chip-rojo">' + esc(fila.error) + '</span>' : '<span class="chip chip-verde">Válido</span>'}</td>
+        </tr>`;
+      }
+      html += '</tbody></table></div>';
+      previewContainer.innerHTML = html;
+      confirmBtn.disabled = false;
+    };
+    reader.readAsText(archivo);
+  });
+
+  confirmBtn.addEventListener('click', async () => {
+    let importados = 0;
+    let errores = 0;
+    for (const row of filasParseadas) {
+      if (row.error || !row.nro) { errores++; continue; }
+      const valorHora = obtenerValorHoraDe('Categoría 1', row.anio, row.mes);
+      const sueldoBruto = redondear2(row.horas * valorHora);
+      const descuentosDelSocio = descuentoTotalDe(row.nro);
+      const retenesAplicables = (DB.retenes || []).filter(r => r.activo !== false && r.porcentaje > 0);
+      const descRetenes = retenesAplicables.reduce((acc, r) => acc + (sueldoBruto * r.porcentaje / 100), 0);
+      const monotributo = (DB.monotributos || []).find(m => String(m.nroSocio) === String(row.nro) && m.anio === row.anio && m.mes === row.mes && m.estado !== 'Anulado');
+      const descMono = monotributo ? Number(monotributo.monto || 0) : 0;
+      const retGanancias = (DB.retenciones || []).filter(r => String(r.nroSocio) === String(row.nro) && r.tipo === 'Ganancias' && r.anio === row.anio && r.mes === row.mes && r.estado !== 'Anulado');
+      const descGanancias = retGanancias.reduce((acc, r) => acc + Number(r.monto || 0), 0);
+      const retIIBB = (DB.retenciones || []).filter(r => String(r.nroSocio) === String(row.nro) && r.tipo === 'IIBB' && r.anio === row.anio && r.mes === row.mes && r.estado !== 'Anulado');
+      const descIIBB = retIIBB.reduce((acc, r) => acc + Number(r.monto || 0), 0);
+      const descuentosTotal = redondear2(descuentosDelSocio + descRetenes + descMono + descGanancias + descIIBB);
+      const registro = {
+        id: Date.now().toString() + importados,
+        nroSocio: Number(row.nro),
+        nombreAsociado: row.nombre,
+        servicio: '',
+        categoria: 'Categoría 1',
+        anio: row.anio,
+        mes: row.mes,
+        horasTrabajadas: row.horas,
+        valorHora,
+        sueldoBruto,
+        descuentosTotal,
+        desgloseDescuentos: { descuentos: redondear2(descuentosDelSocio), retenes: redondear2(descRetenes), monotributo: redondear2(descMono), ganancias: redondear2(descGanancias), iibb: redondear2(descIIBB) },
+        sueldoNeto: redondear2(sueldoBruto - descuentosTotal),
+        observaciones: 'Importado desde CSV',
+        estado: 'Borrador',
+        editadoPor: getCurrentUser()?.nombre || '',
+        editadoEn: new Date().toISOString(),
+      };
+      DB.liquidacionesHoras.push(registro);
+      await supaSync('liquidacionesHoras', registro).catch(() => {});
+      importados++;
+    }
+    cerrarModal('modal-importar-csv');
+    showToast(`Importados: ${importados}. Errores: ${errores}`, errores ? 'warn' : 'ok');
+    renderLiquidacionHorasInicial('borradores');
+  });
 }

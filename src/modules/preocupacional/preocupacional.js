@@ -6,6 +6,7 @@ import { supaSync } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/modal.js';
 import { esc, fechaISOToDisplay } from '../../shared/helpers.js';
 import { getGeminiKey, analizarConGemini } from '../../shared/ai.js';
+import { subirAdjunto, htmlAdjuntos, verAdjunto } from '../../shared/adjuntos.js';
 
 export const PRESTADORES = ['MEDE', 'Grupo CMC', 'IDT'];
 export const RESULTADOS_PREOCUP = ['Apto', 'Apto con observaciones', 'No Apto'];
@@ -111,6 +112,8 @@ export function abrirNuevoPreocup() {
           <div class="field"><label>Fecha del turno</label><input type="date" name="fechaTurno" /></div>
           <div class="field"><label>Prestador</label><select name="prestador">${PRESTADORES.map((p) => `<option>${p}</option>`).join('')}</select></div>
           <div class="field full"><label>Observaciones</label><textarea name="observaciones" rows="3"></textarea></div>
+          <div class="field"><label>Apto médico (PDF/IMG)</label><input type="file" id="preocup-apto" accept=".pdf,.jpg,.png" /></div>
+          <div class="field"><label>Estudios complementarios (PDF/IMG)</label><input type="file" id="preocup-estudios" accept=".pdf,.jpg,.png" /></div>
         </div>
       </div>
       <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-preocup')">Cancelar</button><button type="submit" class="btn">Guardar</button></div>
@@ -133,7 +136,13 @@ export function abrirNuevoPreocup() {
     };
     DB.preocupacionales.push(p);
     supaSync('preocupacionales', p)
-      .then(() => { cerrarModal('modal-preocup'); showToast('Examen guardado', 'ok'); renderPreocup(); })
+      .then(async () => {
+        const fApto = document.getElementById('preocup-apto')?.files?.[0];
+        if (fApto) await subirAdjunto({ etapa: 'preocupacional', tipo: 'apto', refIdLocal: p.id, file: fApto }).catch(e => showToast(e.message, 'err'));
+        const fEst = document.getElementById('preocup-estudios')?.files?.[0];
+        if (fEst) await subirAdjunto({ etapa: 'preocupacional', tipo: 'estudios', refIdLocal: p.id, file: fEst }).catch(e => showToast(e.message, 'err'));
+        cerrarModal('modal-preocup'); showToast('Examen guardado', 'ok'); renderPreocup();
+      })
       .catch((e) => showToast(e.message, 'err'));
   });
 }
@@ -155,6 +164,11 @@ export function abrirGestionPreocup(id) {
           </div>
           <div class="field full"><label>Observaciones</label><textarea name="observaciones" rows="2">${esc(p.observaciones || '')}</textarea></div>
         </div>
+        <h4>Adjuntos</h4>
+        <div class="form-grid">
+          <div class="field"><label>Apto médico</label>${htmlAdjuntos('preocupacional', 'apto', p.id)}<input type="file" id="preocup-gest-apto" accept=".pdf,.jpg,.png" /></div>
+          <div class="field"><label>Estudios complementarios</label>${htmlAdjuntos('preocupacional', 'estudios', p.id)}<input type="file" id="preocup-gest-estudios" accept=".pdf,.jpg,.png" /></div>
+        </div>
         <div class="toolbar">
           <button type="button" class="btn btn-success" onclick="aprobarPreocup('${esc(String(p.id))}')">Aprobar</button>
           <button type="button" class="btn btn-danger" onclick="rechazarPreocup('${esc(String(p.id))}')">Rechazar</button>
@@ -169,7 +183,13 @@ export function abrirGestionPreocup(id) {
     const datos = capturar(ev);
     Object.assign(p, { prestador: datos.prestador, fechaTurno: datos.fechaTurno, fechaResultado: datos.fechaResultado, resultado: datos.resultado, observaciones: datos.observaciones });
     supaSync('preocupacionales', p)
-      .then(() => { showToast('Cambios guardados', 'ok'); abrirGestionPreocup(p.id); })
+      .then(async () => {
+        const fApto = document.getElementById('preocup-gest-apto')?.files?.[0];
+        if (fApto) await subirAdjunto({ etapa: 'preocupacional', tipo: 'apto', refIdLocal: p.id, file: fApto }).catch(e => showToast(e.message, 'err'));
+        const fEst = document.getElementById('preocup-gest-estudios')?.files?.[0];
+        if (fEst) await subirAdjunto({ etapa: 'preocupacional', tipo: 'estudios', refIdLocal: p.id, file: fEst }).catch(e => showToast(e.message, 'err'));
+        showToast('Cambios guardados', 'ok'); abrirGestionPreocup(p.id);
+      })
       .catch((e) => showToast(e.message, 'err'));
   });
 }

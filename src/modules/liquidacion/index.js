@@ -16,7 +16,7 @@ export * from './mantenimiento.js';
 
 import { renderCategorias, agregarCategoria, editarCategoria, anularCategoria, guardarCategoria, vistaPreviaCategorias, verParametrosValoresYObservaciones } from './categorias.js';
 import { renderSmvm, agregarValorParametro, editarValorParametro, anularValorParametro, guardarValorParametro, verParametrosVerHistorial } from './smvm.js';
-import { renderLiquidacionHorasInicial, filtrarLiquidacionesHoras, verLiquidacionHoras, abrirNuevaLiquidacionHoras, abrirEditarLiquidacionHorasPorId, autocompletarLiquidacion, pintarValorHora, liquidarHorasPorId, anularLiquidacionHorasPorId } from './liquidacion_horas.js';
+import { renderLiquidacionHorasInicial, filtrarLiquidacionesHoras, verLiquidacionHoras, abrirNuevaLiquidacionHoras, abrirEditarLiquidacionHorasPorId, autocompletarLiquidacion, pintarValorHora, liquidarHorasPorId, anularLiquidacionHorasPorId, importarHorasCSV } from './liquidacion_horas.js';
 import { renderLiqAdminInicial, filtrarLiqAdmin, verLiqAdmin, abrirNuevaLiqAdmin, autocompletarLiqAdmin, liquidarAdminPorId, anularLiqAdminPorId } from './liq_admin.js';
 import { renderMantenimiento, renderMantenimientoTab, exportarBackupJSON, limpiarRegistrosAnulados, verLogs } from './mantenimiento.js';
 import { renderRetenes, agregarReten, editarReten, anularReten, guardarReten } from './retenes.js';
@@ -124,6 +124,7 @@ window.autocompletarLiquidacion = autocompletarLiquidacion;
 window.pintarValorHora = pintarValorHora;
 window.liquidarHorasPorId = liquidarHorasPorId;
 window.anularLiquidacionHorasPorId = anularLiquidacionHorasPorId;
+window.importarHorasCSV = importarHorasCSV;
 window.renderLiqAdminInicial = renderLiqAdminInicial;
 window.filtrarLiqAdmin = filtrarLiqAdmin;
 window.verLiqAdmin = verLiqAdmin;

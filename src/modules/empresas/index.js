@@ -2,7 +2,7 @@
 
 export * from './empresas.js';
 
-import { renderEmpresas, abrirNuevaEmpresa, verEmpresa } from './empresas.js';
+import { renderEmpresas, abrirNuevaEmpresa, verEmpresa, editarEmpresa, toggleActivaEmpresa } from './empresas.js';
 
 export const empresasScreenConfig = {
   empresas: {
@@ -15,3 +15,5 @@ export const empresasScreenConfig = {
 window.renderEmpresas = renderEmpresas;
 window.abrirNuevaEmpresa = abrirNuevaEmpresa;
 window.verEmpresa = verEmpresa;
+window.editarEmpresa = editarEmpresa;
+window.toggleActivaEmpresa = toggleActivaEmpresa;

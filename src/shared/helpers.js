@@ -88,7 +88,7 @@ export function calcularEstadoVencimiento(vencimientoISO) {
 }
 
 export function uuid() {
-  return Date.now().toString();
+  return crypto.randomUUID();
 }
 
 export function esc(s) {

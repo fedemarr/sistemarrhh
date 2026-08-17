@@ -51,7 +51,7 @@ export function abrirNuevoRecibo() {
     <div class="modal-head"><h2>Nuevo recibo de sueldo</h2><button class="modal-close" onclick="cerrarModal('modal-recibo')">×</button></div>
     <form id="form-recibo">
       <div class="modal-body">
-        <p>Genera el recibo a partir de la liquidación de horas del periodo. Si no existe, se crea en cero.</p>
+        <p>Genera el recibo a partir de la liquidación de horas o administrativa del periodo. Si no existe, se crea en cero.</p>
         <div class="form-grid">
           <div class="field"><label>N° de socio *</label><input name="nroSocio" required /></div>
           <div class="field"><label>Asociado</label><input name="nombreAsociado" /></div>
@@ -71,8 +71,17 @@ export function abrirNuevoRecibo() {
     if ((DB.liquidaciones || []).some((l) => String(l.nroSocio) === String(nro) && l.anio === anio && l.mes === mes && l.estado !== 'Anulado')) { showToast('Ya existe un recibo para ese periodo.', 'err'); return; }
     const leg = (DB.legajos || []).find((l) => String(l.nro) === String(nro));
     const horas = obtenerHorasLiquidacion(nro, anio, mes);
-    const bruto = horas?.sueldoBruto || 0;
-    const desc = horas?.descuentosTotal || 0;
+    const lAdmin = (DB.liqAdmin || []).find(l => String(l.nroSocio) === String(nro) && l.anio === anio && l.mes === mes && l.estado !== 'Anulado');
+    let bruto = 0, desc = 0, fuente = '';
+    if (horas?.sueldoBruto) {
+      bruto = horas.sueldoBruto || 0;
+      desc = horas.descuentosTotal || 0;
+      fuente = 'Horas';
+    } else if (lAdmin?.sueldoBruto) {
+      bruto = lAdmin.sueldoBruto || 0;
+      desc = lAdmin.descuentos || 0;
+      fuente = 'Admin';
+    }
     const recibo = {
       id: Date.now().toString(),
       nroSocio: Number(nro),
@@ -82,13 +91,14 @@ export function abrirNuevoRecibo() {
       sueldoBruto: bruto,
       descuentosTotal: desc,
       sueldoNeto: redondear2(bruto - desc),
+      fuente,
       estado: 'Borrador',
       editadoPor: getCurrentUser()?.nombre || '',
       editadoEn: new Date().toISOString(),
     };
     DB.liquidaciones.push(recibo);
     supaSync('liquidaciones', recibo)
-      .then(() => { cerrarModal('modal-recibo'); showToast('Recibo generado', 'ok'); renderLiquidaciones('borradores'); })
+      .then(() => { cerrarModal('modal-recibo'); showToast('Recibo generado' + (fuente ? ` (fuente: ${fuente})` : ''), 'ok'); renderLiquidaciones('borradores'); })
       .catch((e) => showToast(e.message, 'err'));
   });
 }
@@ -102,6 +112,7 @@ export function verRecibo(id) {
       <div class="recibo">
         <h3>Recibo de sueldo — ${esc(periodoLabel(l.anio, l.mes))}</h3>
         <p><strong>Asociado:</strong> ${esc(l.nombreAsociado || '')} (N° ${esc(l.nroSocio || '')})</p>
+        ${l.fuente ? `<p><strong>Fuente:</strong> ${esc(l.fuente)}</p>` : ''}
         <div class="grid3">
           <div><strong>Bruto</strong><br/>$${redondear2(l.sueldoBruto)}</div>
           <div><strong>Descuentos</strong><br/>$${redondear2(l.descuentosTotal)}</div>
@@ -130,6 +141,7 @@ export function imprimirRecibo(id) {
     <h3>Recibo de sueldo — ${esc(periodoLabel(l.anio, l.mes))}</h3>
     <table class="rec">
       <tr><td>Asociado:</td><td><strong>${esc(l.nombreAsociado || '')}</strong></td><td>N°:</td><td>${esc(l.nroSocio || '')}</td></tr>
+      ${l.fuente ? `<tr><td>Fuente:</td><td colspan="3">${esc(l.fuente)}</td></tr>` : ''}
       <tr><td>Conceptos</td><td colspan="3"></td></tr>
       <tr><td>Sueldo bruto</td><td>$${redondear2(l.sueldoBruto)}</td><td></td><td></td></tr>
       <tr><td>Descuentos</td><td>-$${redondear2(l.descuentosTotal)}</td><td></td><td></td></tr>

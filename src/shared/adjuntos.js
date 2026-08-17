@@ -10,16 +10,18 @@ export const BUCKET = 'adjuntos';
 
 export async function subirAdjunto({ etapa, tipo, refIdLocal, file }) {
   if (!file) return null;
-  if (file.type && file.type !== 'application/pdf') {
-    throw new Error('Solo se permiten adjuntos PDF.');
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+  if (file.type && !allowedTypes.includes(file.type)) {
+    throw new Error('Solo se permiten adjuntos PDF o imágenes (JPG/PNG).');
   }
   if (file.size > MAX_SIZE_ADJUNTO) {
     throw new Error('El archivo supera el máximo de 10MB.');
   }
   const client = getClient();
   const path = `${etapa}/${refIdLocal}/${Date.now()}-${String(file.name).replace(/[^\w.\-]/g, '_')}`;
+  const contentType = file.type || 'application/pdf';
   const { error } = await client.storage.from(BUCKET).upload(path, file, {
-    contentType: 'application/pdf',
+    contentType,
     upsert: false,
   });
   if (error) throw new Error('Error al subir el adjunto: ' + error.message);

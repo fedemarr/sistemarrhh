@@ -6,6 +6,7 @@ import { supaSync } from '../../shared/supabase.js';
 import { ensureModal, cerrarModal, showToast, capturar } from '../../shared/modal.js';
 import { esc, fechaISOToDisplay, calcularEstadoVencimiento } from '../../shared/helpers.js';
 import { getGeminiKey, analizarConGemini } from '../../shared/ai.js';
+import { subirAdjunto, htmlAdjuntos, verAdjunto } from '../../shared/adjuntos.js';
 
 export { calcularEstadoVencimiento };
 
@@ -133,6 +134,9 @@ export function abrirNuevaDocum() {
           <div class="field"><label>DNI *</label><input name="dni" required inputmode="numeric" /></div>
           <div class="field"><label>Candidato (id)</label><input name="candidatoId" /></div>
           <div class="field full"><label>Nombre *</label><input name="nombre" required /></div>
+          <div class="field"><label>Antecedentes penales (PDF/IMG)</label><input type="file" id="docum-antecedentes" accept=".pdf,.jpg,.png" /></div>
+          <div class="field"><label>Libreta sanitaria (PDF/IMG)</label><input type="file" id="docum-libreta" accept=".pdf,.jpg,.png" /></div>
+          <div class="field"><label>Certificado curso (PDF/IMG)</label><input type="file" id="docum-curso" accept=".pdf,.jpg,.png" /></div>
         </div>
       </div>
       <div class="modal-foot"><button type="button" class="btn btn-secondary" onclick="cerrarModal('modal-docum')">Cancelar</button><button type="submit" class="btn">Guardar</button></div>
@@ -157,7 +161,15 @@ export function abrirNuevaDocum() {
     };
     DB.documentacionIngreso.push(d);
     supaSync('documentacionIngreso', d)
-      .then(() => { cerrarModal('modal-docum'); showToast('Expediente creado', 'ok'); renderDocum(); })
+      .then(async () => {
+        const fAnt = document.getElementById('docum-antecedentes')?.files?.[0];
+        if (fAnt) await subirAdjunto({ etapa: 'documentacion', tipo: 'antecedentes', refIdLocal: d.id, file: fAnt }).catch(e => showToast(e.message, 'err'));
+        const fLib = document.getElementById('docum-libreta')?.files?.[0];
+        if (fLib) await subirAdjunto({ etapa: 'documentacion', tipo: 'libreta', refIdLocal: d.id, file: fLib }).catch(e => showToast(e.message, 'err'));
+        const fCur = document.getElementById('docum-curso')?.files?.[0];
+        if (fCur) await subirAdjunto({ etapa: 'documentacion', tipo: 'curso', refIdLocal: d.id, file: fCur }).catch(e => showToast(e.message, 'err'));
+        cerrarModal('modal-docum'); showToast('Expediente creado', 'ok'); renderDocum();
+      })
       .catch((e) => showToast(e.message, 'err'));
   });
 }
@@ -181,6 +193,12 @@ export function abrirGestionDocum(id) {
           <div class="field full"><label>Observaciones</label><textarea name="observaciones" rows="3">${esc(d.observaciones || '')}</textarea></div>
           <div class="field full"><label>Motivo (rechazo/alta con excepción)</label><input name="motivo" value="${esc(d.motivo || '')}" /></div>
         </div>
+        <h4>Adjuntos</h4>
+        <div class="form-grid">
+          <div class="field"><label>Antecedentes</label>${htmlAdjuntos('documentacion', 'antecedentes', d.id)}<input type="file" id="docum-gest-antecedentes" accept=".pdf,.jpg,.png" /></div>
+          <div class="field"><label>Libreta sanitaria</label>${htmlAdjuntos('documentacion', 'libreta', d.id)}<input type="file" id="docum-gest-libreta" accept=".pdf,.jpg,.png" /></div>
+          <div class="field"><label>Certificado curso</label>${htmlAdjuntos('documentacion', 'curso', d.id)}<input type="file" id="docum-gest-curso" accept=".pdf,.jpg,.png" /></div>
+        </div>
         <div class="toolbar">
           <button type="button" class="btn btn-success" onclick="aprobarDocum('${esc(String(d.id))}')">Aprobar</button>
           <button type="button" class="btn btn-warning" onclick="excepcionDocum('${esc(String(d.id))}')">Aprobar con excepción</button>
@@ -201,7 +219,15 @@ export function abrirGestionDocum(id) {
     d.libretaAplica = document.getElementById('docum-togle-libreta').checked;
     d.cursoTiene = document.getElementById('docum-togle-curso').checked;
     supaSync('documentacionIngreso', d)
-      .then(() => { showToast('Cambios guardados', 'ok'); abrirGestionDocum(d.id); })
+      .then(async () => {
+        const fAnt = document.getElementById('docum-gest-antecedentes')?.files?.[0];
+        if (fAnt) await subirAdjunto({ etapa: 'documentacion', tipo: 'antecedentes', refIdLocal: d.id, file: fAnt }).catch(e => showToast(e.message, 'err'));
+        const fLib = document.getElementById('docum-gest-libreta')?.files?.[0];
+        if (fLib) await subirAdjunto({ etapa: 'documentacion', tipo: 'libreta', refIdLocal: d.id, file: fLib }).catch(e => showToast(e.message, 'err'));
+        const fCur = document.getElementById('docum-gest-curso')?.files?.[0];
+        if (fCur) await subirAdjunto({ etapa: 'documentacion', tipo: 'curso', refIdLocal: d.id, file: fCur }).catch(e => showToast(e.message, 'err'));
+        showToast('Cambios guardados', 'ok'); abrirGestionDocum(d.id);
+      })
       .catch((e) => showToast(e.message, 'err'));
   });
 }
