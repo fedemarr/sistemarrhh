@@ -2,7 +2,7 @@
 // Cubre: login (Auth), sync de tablas, cálculo salarial, adelantos y competencia anual.
 
 import assert from 'node:assert/strict';
-import { setClient, _SM, _toSnakeRow, supaSync } from '../src/shared/supabase.js';
+import { setClient, _SM, _toSnakeRow, _toCamelRow, supaSync } from '../src/shared/supabase.js';
 import { login } from '../src/shared/auth.js';
 import { initDB, DB } from '../src/state.js';
 import { calcularSalario, smvmDe, redondear2, periodoLabel } from '../src/modules/liquidacion/liqUtils.js';
@@ -135,6 +135,17 @@ await testAsync('supaSync legajos (multitenant)', async () => {
 test('_toSnakeRow genérico', () => {
   const r = _toSnakeRow({ id: 'x1', nombreAsociado: 'A', infoEFT: 's' });
   assert.deepEqual(Object.keys(r).sort(), ['id_local', 'info_eft', 'nombre_asociado']);
+});
+
+// 5b. _toCamelRow debe deshacer exactamente lo que hace _toSnakeRow con el id
+// (regresión: id_local volvía como '.idLocal' en vez de '.id' al releer de la
+// DB -- cualquier getXById() sobre un registro recién cargado fallaba en
+// silencio porque .id daba undefined).
+test('_toCamelRow revierte id_local -> id', () => {
+  const row = _toSnakeRow({ id: 'x1', nombreAsociado: 'A' });
+  const back = _toCamelRow(row);
+  assert.equal(back.id, 'x1');
+  assert.equal(back.idLocal, undefined);
 });
 
 // 6. Cálculo salarial (SMVM default 234315.12, Categoría 2 factor 1.05)

@@ -200,6 +200,12 @@ export function _toSnake(key) {
 }
 
 export function _toCamel(key) {
+  // Espejo de _toSnakeRow: 'id'/'id_local' siempre se guardan como columna
+  // id_local. Sin este caso especial, al releer quedaba como '.idLocal' en
+  // vez de '.id' -- CUALQUIER búsqueda por id (getXById) sobre un registro
+  // recién cargado de la base (no creado en la sesión actual) fallaba en
+  // silencio porque .id daba undefined.
+  if (key === 'id_local') return 'id';
   if (Object.prototype.hasOwnProperty.call(_REVERSE, key)) return _REVERSE[key];
   return String(key).replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
