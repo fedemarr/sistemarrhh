@@ -341,7 +341,7 @@ export function revertirDocum(id) {
 export async function analizarAntecedentesIA(id) {
   const d = getDocumById(id);
   if (!d) return;
-  showToast('Analizando antecedentes con IA…', 'warn');
+  showToast('Analizando antecedentes con IA… puede tardar hasta 1 minuto en documentos largos.', 'warn');
   try {
     const prompt = `Analizá el certificado de antecedentes penales adjunto (documento real, no inventes nada que no figure en él). Necesito puntualmente:\n1. La fecha de emisión que figura en el documento.\n2. El resultado real: ¿registra antecedentes o no (certificado positivo/negativo)?\n3. Cualquier observación relevante para decidir si hay algo que impida el alta del candidato.\nSi alguno de estos datos no aparece en el documento, decilo explícitamente en vez de inventarlo o suponerlo.\n\nDatos de referencia (para contexto, no reemplazan lo que diga el documento): ${d.nombre}, DNI ${d.dni}.`;
     const respuesta = await analizarConGemini({ etapa: 'documentacion', tipo: 'antecedentes', refIdLocal: d.id, prompt });

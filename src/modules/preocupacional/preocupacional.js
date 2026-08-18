@@ -274,7 +274,7 @@ export function bajaPreocup(id) {
 export async function analizarAptoMedicoIA(id) {
   const p = getPreocupById(id);
   if (!p) return;
-  showToast('Analizando apto médico con IA…', 'warn');
+  showToast('Analizando apto médico con IA… puede tardar hasta 1 minuto en documentos largos.', 'warn');
   try {
     const prompt = `Analizá el apto médico adjunto (documento real, no inventes nada que no figure en él). Necesito puntualmente:\n1. La fecha que figura en el documento.\n2. El resultado real tal como está escrito ahí: ¿APTO, APTO CON OBSERVACIONES, o NO APTO?\n3. Un resumen breve de las observaciones o restricciones que indique, si las hay.\nSi alguno de estos datos no aparece en el documento, decilo explícitamente en vez de inventarlo o suponerlo.\n\nDatos de referencia del candidato (para contexto, no reemplazan lo que diga el documento): ${p.nombre}, DNI ${p.dni}, prestador ${p.prestador || 'sin dato'}.`;
     const respuesta = await analizarConGemini({ etapa: 'preocupacional', tipo: 'apto', refIdLocal: p.id, prompt });

@@ -96,20 +96,37 @@ Deno.serve(async (req) => {
     const mimeType = fileBlob.type || (adjunto.nombre_archivo?.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'application/octet-stream');
     const base64 = bufferToBase64(await fileBlob.arrayBuffer());
 
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inlineData: { mimeType, data: base64 } },
-          ],
-        }],
-      }),
+    const geminiBody = JSON.stringify({
+      contents: [{
+        parts: [
+          { text: prompt },
+          { inlineData: { mimeType, data: base64 } },
+        ],
+      }],
     });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) return json({ error: data?.error?.message || `Error de Gemini: ${res.status}` }, 502);
+
+    // Documentos más largos hacen que el modelo "piense" más y de vez en
+    // cuando Google devuelve 503 ("modelo con alta demanda, temporal") —
+    // reintenta un par de veces con backoff antes de darse por vencido.
+    let res, data;
+    const intentos = [0, 2000];
+    for (let i = 0; i < intentos.length; i++) {
+      if (intentos[i]) await new Promise((r) => setTimeout(r, intentos[i]));
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: geminiBody,
+      });
+      data = await res.json().catch(() => null);
+      if (res.ok) break;
+      const reintentable = res.status === 503 || res.status === 429;
+      if (!reintentable || i === intentos.length - 1) break;
+    }
+    if (!res.ok) {
+      const msg = data?.error?.message || `Error de Gemini: ${res.status}`;
+      const sugerencia = (res.status === 503 || res.status === 429) ? ' Probá de nuevo en un momento.' : '';
+      return json({ error: msg + sugerencia }, 502);
+    }
 
     const respuesta = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta de la IA.';
     return json({ respuesta, archivoAnalizado: adjunto.nombre_archivo });

@@ -304,7 +304,7 @@ export function revertirPsico(id) {
 export async function analizarInformePsicoIA(id) {
   const p = getPsicoById(id);
   if (!p) return;
-  showToast('Analizando informe psicotécnico con IA…', 'warn');
+  showToast('Analizando informe psicotécnico con IA… puede tardar hasta 1 minuto en documentos largos.', 'warn');
   try {
     const prompt = `Analizá el informe psicotécnico adjunto (documento real, no inventes nada que no figure en él). Necesito puntualmente:\n1. La fecha que figura en el documento (de realización o de emisión).\n2. El resultado/dictamen real tal como está escrito ahí: ¿APTO, NO APTO, o apto con alguna condición/observación?\n3. Un resumen breve de las observaciones o fundamentos que da el informe.\nSi alguno de estos datos no aparece en el documento, decilo explícitamente en vez de inventarlo o suponerlo.\n\nDatos de referencia del candidato (para contexto, no reemplazan lo que diga el documento): ${p.nombre}, DNI ${p.dni}.`;
     const respuesta = await analizarConGemini({ etapa: 'psicotecnico', tipo: 'informe', refIdLocal: p.id, prompt });
