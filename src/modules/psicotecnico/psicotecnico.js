@@ -182,7 +182,8 @@ export function abrirGestionPsico(id) {
         </div>
         <div class="adjunto-box psico">
           <h4>🎙️ Informe psicotécnico</h4>
-          <div class="field">${htmlAdjuntos('psicotecnico', 'informe', p.id)}<input type="file" id="psico-gest-informe" accept=".pdf,.jpg,.png" /></div>
+          <div class="field">${htmlAdjuntos('psicotecnico', 'informe', p.id)}<input type="file" id="psico-gest-informe" accept=".pdf,.jpg,.png" onchange="subirInformePsicoInline('${esc(String(p.id))}')" /></div>
+          <p class="muted" id="psico-gest-informe-estado"></p>
           <button type="button" class="btn btn-secondary" onclick="analizarInformePsicoIA('${esc(String(p.id))}')">🤖 Analizar con IA</button>
         </div>
         <div class="grupo"><legend>Etapas (${ETAPAS_PSICO.filter((e) => e.obligatoria).map((e) => e.label).join(' y ')} obligatorias)</legend>
@@ -214,6 +215,27 @@ export function abrirGestionPsico(id) {
       })
       .catch((e) => showToast(e.message, 'err'));
   });
+}
+
+// Sube el archivo apenas se elige, en vez de esperar a "Guardar etapas":
+// antes había que elegir el PDF Y ADEMÁS guardar el form para que el
+// archivo llegara al servidor — si alguien elegía el archivo y apretaba
+// directo "Analizar con IA", el archivo nunca se había subido en realidad
+// y el análisis fallaba con "No hay ningún archivo subido todavía".
+export async function subirInformePsicoInline(id) {
+  const input = document.getElementById('psico-gest-informe');
+  const file = input?.files?.[0];
+  if (!file) return;
+  const estado = document.getElementById('psico-gest-informe-estado');
+  if (estado) estado.textContent = 'Subiendo…';
+  try {
+    await subirAdjunto({ etapa: 'psicotecnico', tipo: 'informe', refIdLocal: id, file });
+    showToast('Informe subido', 'ok');
+    abrirGestionPsico(id);
+  } catch (e) {
+    showToast(e.message, 'err');
+    if (estado) estado.textContent = '';
+  }
 }
 
 export function guardarEtapasPsico(id, etapas) {

@@ -2,7 +2,7 @@
 
 export * from './psicotecnico.js';
 
-import { renderPsico, tabPsico, abrirNuevoPsico, abrirGestionPsico, guardarEtapasPsico, guardarPsico, aprobarPsico, rechazarPsico, revertirPsico, analizarInformePsicoIA, usarDatosIAInformePsico } from './psicotecnico.js';
+import { renderPsico, tabPsico, abrirNuevoPsico, abrirGestionPsico, guardarEtapasPsico, guardarPsico, aprobarPsico, rechazarPsico, revertirPsico, analizarInformePsicoIA, usarDatosIAInformePsico, subirInformePsicoInline } from './psicotecnico.js';
 
 export const psicotecnicoScreenConfig = {
   psicotecnico: {
@@ -24,3 +24,4 @@ window.rechazarPsico = rechazarPsico;
 window.revertirPsico = revertirPsico;
 window.analizarInformePsicoIA = analizarInformePsicoIA;
 window.usarDatosIAInformePsico = usarDatosIAInformePsico;
+window.subirInformePsicoInline = subirInformePsicoInline;

@@ -195,7 +195,7 @@ export function abrirGestionDocum(id) {
           <div class="adjunto-box documentacion">
             <h4>🎙️ Certificados de antecedentes (se conserva historial)</h4>
             ${htmlAdjuntos('documentacion', 'antecedentes', d.id)}
-            <div class="field"><input type="file" id="docum-gest-antecedentes" accept=".pdf,.jpg,.png" /></div>
+            <div class="field"><input type="file" id="docum-gest-antecedentes" accept=".pdf,.jpg,.png" onchange="subirAdjuntoDocumInline('${esc(String(d.id))}','antecedentes')" /></div>
             <button type="button" class="btn btn-secondary" onclick="analizarAntecedentesIA('${esc(String(d.id))}')">🤖 Analizar con IA</button>
           </div>
         </div>
@@ -203,13 +203,13 @@ export function abrirGestionDocum(id) {
         <div class="grupo"><legend>🟢 Libreta sanitaria</legend>
           <div class="field checkbox"><input type="checkbox" id="docum-togle-libreta" ${d.libretaAplica ? 'checked' : ''} /><label>¿Requiere libreta sanitaria?</label></div>
           <div class="field"><label>Vence</label><input type="date" name="libretaVencimiento" value="${esc(d.libretaVencimiento || '')}" /></div>
-          <div class="field"><label>Libreta sanitaria</label>${htmlAdjuntos('documentacion', 'libreta', d.id)}<input type="file" id="docum-gest-libreta" accept=".pdf,.jpg,.png" /></div>
+          <div class="field"><label>Libreta sanitaria</label>${htmlAdjuntos('documentacion', 'libreta', d.id)}<input type="file" id="docum-gest-libreta" accept=".pdf,.jpg,.png" onchange="subirAdjuntoDocumInline('${esc(String(d.id))}','libreta')" /></div>
         </div>
 
         <div class="grupo"><legend>🧢 Curso de manipulación de alimentos</legend>
           <div class="field checkbox"><input type="checkbox" id="docum-togle-curso" ${d.cursoTiene ? 'checked' : ''} /><label>¿Tiene el curso?</label></div>
           <div class="field"><label>Vence</label><input type="date" name="cursoVencimiento" value="${esc(d.cursoVencimiento || '')}" /></div>
-          <div class="field"><label>Certificado curso</label>${htmlAdjuntos('documentacion', 'curso', d.id)}<input type="file" id="docum-gest-curso" accept=".pdf,.jpg,.png" /></div>
+          <div class="field"><label>Certificado curso</label>${htmlAdjuntos('documentacion', 'curso', d.id)}<input type="file" id="docum-gest-curso" accept=".pdf,.jpg,.png" onchange="subirAdjuntoDocumInline('${esc(String(d.id))}','curso')" /></div>
         </div>
 
         <div class="form-grid">
@@ -247,6 +247,21 @@ export function abrirGestionDocum(id) {
       })
       .catch((e) => showToast(e.message, 'err'));
   });
+}
+
+const DOCUM_INPUT_POR_TIPO = { antecedentes: 'docum-gest-antecedentes', libreta: 'docum-gest-libreta', curso: 'docum-gest-curso' };
+
+// Sube apenas se elige el archivo, en vez de esperar a "Guardar" (ver
+// psicotecnico.js:subirInformePsicoInline para el porqué).
+export async function subirAdjuntoDocumInline(id, tipo) {
+  const inputId = DOCUM_INPUT_POR_TIPO[tipo];
+  const file = inputId ? document.getElementById(inputId)?.files?.[0] : null;
+  if (!file) return;
+  try {
+    await subirAdjunto({ etapa: 'documentacion', tipo, refIdLocal: id, file });
+    showToast('Archivo subido', 'ok');
+    abrirGestionDocum(id);
+  } catch (e) { showToast(e.message, 'err'); }
 }
 
 export function guardarDocum(datos) {

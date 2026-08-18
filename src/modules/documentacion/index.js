@@ -2,7 +2,7 @@
 
 export * from './documentacion.js';
 
-import { renderDocum, tabDocum, filtrarDocum, abrirNuevaDocum, abrirGestionDocum, guardarDocum, recalcularVencAntec, recalcularVencLibreta, toggleSeccionLibreta, toggleSeccionCurso, aprobarDocum, excepcionDocum, bajaDocum, rechazarDocum, revertirDocum, analizarAntecedentesIA } from './documentacion.js';
+import { renderDocum, tabDocum, filtrarDocum, abrirNuevaDocum, abrirGestionDocum, guardarDocum, recalcularVencAntec, recalcularVencLibreta, toggleSeccionLibreta, toggleSeccionCurso, aprobarDocum, excepcionDocum, bajaDocum, rechazarDocum, revertirDocum, analizarAntecedentesIA, subirAdjuntoDocumInline } from './documentacion.js';
 
 export const documentacionScreenConfig = {
   documentacion: {
@@ -29,3 +29,4 @@ window.bajaDocum = bajaDocum;
 window.rechazarDocum = rechazarDocum;
 window.revertirDocum = revertirDocum;
 window.analizarAntecedentesIA = analizarAntecedentesIA;
+window.subirAdjuntoDocumInline = subirAdjuntoDocumInline;

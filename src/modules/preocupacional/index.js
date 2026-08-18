@@ -2,7 +2,7 @@
 
 export * from './preocupacional.js';
 
-import { renderPreocup, tabPreocup, filtrarPreocup, abrirNuevoPreocup, abrirGestionPreocup, guardarPreocup, aprobarPreocup, rechazarPreocup, revertirPreocup, bajaPreocup, analizarAptoMedicoIA, usarDatosIAApto } from './preocupacional.js';
+import { renderPreocup, tabPreocup, filtrarPreocup, abrirNuevoPreocup, abrirGestionPreocup, guardarPreocup, aprobarPreocup, rechazarPreocup, revertirPreocup, bajaPreocup, analizarAptoMedicoIA, usarDatosIAApto, subirAptoPreocupInline, subirEstudiosPreocupInline } from './preocupacional.js';
 
 export const preocupacionalScreenConfig = {
   preocupacional: {
@@ -25,3 +25,5 @@ window.revertirPreocup = revertirPreocup;
 window.bajaPreocup = bajaPreocup;
 window.analizarAptoMedicoIA = analizarAptoMedicoIA;
 window.usarDatosIAApto = usarDatosIAApto;
+window.subirAptoPreocupInline = subirAptoPreocupInline;
+window.subirEstudiosPreocupInline = subirEstudiosPreocupInline;

@@ -168,8 +168,8 @@ export function abrirGestionPreocup(id) {
         <div class="adjunto-box preocup">
           <h4>📋 Apto médico (obligatorio para aprobar)</h4>
           <div class="form-grid">
-            <div class="field"><label>Apto médico</label>${htmlAdjuntos('preocupacional', 'apto', p.id)}<input type="file" id="preocup-gest-apto" accept=".pdf,.jpg,.png" /></div>
-            <div class="field"><label>Estudios complementarios</label>${htmlAdjuntos('preocupacional', 'estudios', p.id)}<input type="file" id="preocup-gest-estudios" accept=".pdf,.jpg,.png" /></div>
+            <div class="field"><label>Apto médico</label>${htmlAdjuntos('preocupacional', 'apto', p.id)}<input type="file" id="preocup-gest-apto" accept=".pdf,.jpg,.png" onchange="subirAptoPreocupInline('${esc(String(p.id))}')" /></div>
+            <div class="field"><label>Estudios complementarios</label>${htmlAdjuntos('preocupacional', 'estudios', p.id)}<input type="file" id="preocup-gest-estudios" accept=".pdf,.jpg,.png" onchange="subirEstudiosPreocupInline('${esc(String(p.id))}')" /></div>
           </div>
           <button type="button" class="btn btn-secondary" onclick="analizarAptoMedicoIA('${esc(String(p.id))}')">🤖 Analizar con IA</button>
         </div>
@@ -195,6 +195,28 @@ export function abrirGestionPreocup(id) {
       })
       .catch((e) => showToast(e.message, 'err'));
   });
+}
+
+// Suben apenas se elige el archivo, en vez de esperar a "Guardar" (ver
+// psicotecnico.js:subirInformePsicoInline para el porqué).
+export async function subirAptoPreocupInline(id) {
+  const file = document.getElementById('preocup-gest-apto')?.files?.[0];
+  if (!file) return;
+  try {
+    await subirAdjunto({ etapa: 'preocupacional', tipo: 'apto', refIdLocal: id, file });
+    showToast('Apto médico subido', 'ok');
+    abrirGestionPreocup(id);
+  } catch (e) { showToast(e.message, 'err'); }
+}
+
+export async function subirEstudiosPreocupInline(id) {
+  const file = document.getElementById('preocup-gest-estudios')?.files?.[0];
+  if (!file) return;
+  try {
+    await subirAdjunto({ etapa: 'preocupacional', tipo: 'estudios', refIdLocal: id, file });
+    showToast('Estudio subido', 'ok');
+    abrirGestionPreocup(id);
+  } catch (e) { showToast(e.message, 'err'); }
 }
 
 export function guardarPreocup(datos) {
