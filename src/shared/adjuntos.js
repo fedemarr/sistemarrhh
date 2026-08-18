@@ -10,6 +10,13 @@ export const BUCKET = 'adjuntos';
 
 export async function subirAdjunto({ etapa, tipo, refIdLocal, file }) {
   if (!file) return null;
+  // Guard: si refIdLocal viene undefined/null (registro sin id todavía,
+  // ej. no se guardó bien antes de subir el archivo), NO subir en silencio
+  // con una referencia rota (quedaría un adjunto imposible de encontrar
+  // después). Mejor cortar acá con un error claro.
+  if (refIdLocal === undefined || refIdLocal === null || String(refIdLocal) === 'undefined' || String(refIdLocal).trim() === '') {
+    throw new Error('No se pudo identificar el registro para adjuntar el archivo (falta el ID). Guardá primero y volvé a intentar.');
+  }
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
   if (file.type && !allowedTypes.includes(file.type)) {
     throw new Error('Solo se permiten adjuntos PDF o imágenes (JPG/PNG).');
